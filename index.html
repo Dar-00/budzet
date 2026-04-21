@@ -7,54 +7,130 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <main class="app-shell">
+    <header class="hero">
+      <nav class="topbar" aria-label="Główna nawigacja">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">B</span>
+          <div>
+            <p class="eyebrow">Budżet domowy</p>
+            <strong>Finanse prywatne</strong>
+          </div>
+        </div>
+        <div class="month-pill" id="monthStatus">Aktywny miesiąc</div>
+      </nav>
 
-<div class="container">
-  <h1>Budżet domowy</h1>
+      <section class="hero-grid" aria-label="Szybkie podsumowanie">
+        <div class="hero-copy">
+          <p class="section-label">Dashboard</p>
+          <h1>Pełna kontrola nad budżetem w jednym widoku.</h1>
+          <p class="hero-note" id="financialPulse">Dodaj pierwszą transakcję, aby zobaczyć obraz miesiąca.</p>
+        </div>
 
-  <div class="summary">
-    <div>Przychody: <span id="income">0 zł</span></div>
-    <div>Wydatki: <span id="expenses">0 zł</span></div>
-    <div>Bilans: <span id="balance">0 zł</span></div>
-  </div>
+        <aside class="snapshot">
+          <span class="snapshot-label">Bilans miesiąca</span>
+          <strong id="heroBalance">0 zł</strong>
+          <div class="snapshot-grid">
+            <span>
+              <small>Transakcje</small>
+              <b id="heroTransactions">0</b>
+            </span>
+            <span>
+              <small>Największa kategoria</small>
+              <b id="heroCategory">Brak</b>
+            </span>
+          </div>
+        </aside>
+      </section>
 
-  <div class="forms">
-    <form id="incomeForm" class="budget-form income-form">
-      <h2>Przychód</h2>
+      <section class="summary-grid" aria-label="Podsumowanie finansowe">
+        <article class="metric-card income-card">
+          <span>Przychody miesięczne</span>
+          <strong id="income">0 zł</strong>
+          <small id="incomeMeta">0 transakcji</small>
+        </article>
 
-      <input type="text" name="description" placeholder="Opis przychodu" required>
-      <input type="number" name="amount" placeholder="Kwota przychodu" min="0.01" step="0.01" required>
+        <article class="metric-card expense-card">
+          <span>Wydatki miesięczne</span>
+          <strong id="expenses">0 zł</strong>
+          <small id="expenseMeta">0 transakcji</small>
+        </article>
 
-      <select name="category">
-        <option>Wynagrodzenie</option>
-        <option>Premia</option>
-        <option>Sprzedaż</option>
-        <option>Inne</option>
-      </select>
+        <article class="metric-card balance-card">
+          <span>Bilans</span>
+          <strong id="balance">0 zł</strong>
+          <small id="balanceMeta">Na bieżący miesiąc</small>
+        </article>
+      </section>
+    </header>
 
-      <button type="submit">Dodaj przychód</button>
-    </form>
+    <section class="workspace-grid">
+      <section class="panel input-panel" aria-labelledby="formTitle">
+        <div class="section-heading">
+          <p class="section-label">Nowa pozycja</p>
+          <h2 id="formTitle">Dodaj transakcję</h2>
+        </div>
 
-    <form id="expenseForm" class="budget-form expense-form">
-      <h2>Wydatek</h2>
+        <form id="transactionForm" class="transaction-form">
+          <div class="segmented-control" aria-label="Typ transakcji">
+            <label>
+              <input type="radio" name="type" value="income" checked>
+              <span>Przychód</span>
+            </label>
+            <label>
+              <input type="radio" name="type" value="expense">
+              <span>Wydatek</span>
+            </label>
+          </div>
 
-      <input type="text" name="description" placeholder="Opis wydatku" required>
-      <input type="number" name="amount" placeholder="Kwota wydatku" min="0.01" step="0.01" required>
+          <label class="field">
+            <span>Nazwa</span>
+            <input type="text" name="description" placeholder="np. Wynagrodzenie" autocomplete="off" required>
+          </label>
 
-      <select name="category">
-        <option>Jedzenie</option>
-        <option>Mieszkanie</option>
-        <option>Transport</option>
-        <option>Rozrywka</option>
-        <option>Inne</option>
-      </select>
+          <div class="form-row">
+            <label class="field">
+              <span>Kwota</span>
+              <input type="number" name="amount" placeholder="0,00" min="0.01" step="0.01" required>
+            </label>
 
-      <button type="submit">Dodaj wydatek</button>
-    </form>
-  </div>
+            <label class="field">
+              <span>Data</span>
+              <input type="date" name="date" required>
+            </label>
+          </div>
 
-  <div id="transactions"></div>
-</div>
+          <label class="field">
+            <span>Kategoria</span>
+            <select name="category" id="transactionCategory"></select>
+          </label>
 
-<script src="script.js"></script>
+          <button class="primary-button" type="submit">Dodaj transakcję</button>
+        </form>
+      </section>
+
+      <aside class="panel analytics-panel" aria-labelledby="analyticsTitle">
+        <div class="section-heading">
+          <p class="section-label">Analityka</p>
+          <h2 id="analyticsTitle">Wydatki wg kategorii</h2>
+        </div>
+        <div id="categoryAnalytics" class="analytics-list"></div>
+      </aside>
+    </section>
+
+    <section class="transactions-section" aria-labelledby="transactionsTitle">
+      <div class="section-heading horizontal">
+        <div>
+          <p class="section-label">Historia</p>
+          <h2 id="transactionsTitle">Ostatnie transakcje</h2>
+        </div>
+        <span class="transactions-count" id="transactionsCount">0 pozycji</span>
+      </div>
+
+      <div id="transactions" class="transactions-list"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
