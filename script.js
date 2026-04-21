@@ -1,4 +1,5 @@
 const storageKey = 'premium-budget-transactions';
+const themeStorageKey = 'premium-budget-theme';
 
 const categories = {
   income: ['Wynagrodzenie', 'Premia', 'Zwrot', 'Inwestycje', 'Inne'],
@@ -11,6 +12,7 @@ const elements = {
   transactions: document.getElementById('transactions'),
   transactionsCount: document.getElementById('transactionsCount'),
   analytics: document.getElementById('categoryAnalytics'),
+  themeSelect: document.getElementById('themeSelect'),
   monthStatus: document.getElementById('monthStatus'),
   income: document.getElementById('income'),
   expenses: document.getElementById('expenses'),
@@ -29,6 +31,7 @@ const state = {
   editingId: null
 };
 
+initTheme();
 setMonthStatus();
 setDefaultDate();
 fillCategorySelect(elements.category, getSelectedType(elements.form));
@@ -36,11 +39,18 @@ bindEvents();
 render();
 
 function bindEvents() {
+  elements.themeSelect.addEventListener('change', handleThemeChange);
   elements.form.addEventListener('submit', handleCreateTransaction);
   elements.form.addEventListener('change', handleCreateFormChange);
   elements.transactions.addEventListener('click', handleTransactionAction);
   elements.transactions.addEventListener('submit', handleEditTransaction);
   elements.transactions.addEventListener('change', handleEditFormChange);
+}
+
+function handleThemeChange(event) {
+  const theme = event.target.value;
+  applyTheme(theme);
+  saveTheme(theme);
 }
 
 function handleCreateFormChange(event) {
@@ -491,6 +501,33 @@ function setDefaultDate() {
 
 function getSelectedType(form) {
   return form.elements.type.value;
+}
+
+function initTheme() {
+  const theme = loadTheme();
+  applyTheme(theme);
+  elements.themeSelect.value = theme;
+}
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = normalizedTheme;
+}
+
+function saveTheme(theme) {
+  try {
+    localStorage.setItem(themeStorageKey, theme === 'dark' ? 'dark' : 'light');
+  } catch {
+    return;
+  }
+}
+
+function loadTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 function saveTransactions() {

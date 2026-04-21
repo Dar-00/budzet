@@ -1,19 +1,122 @@
 :root {
   --page: #f5f5f7;
+  --body-bg: linear-gradient(180deg, #ffffff 0%, var(--page) 42%, #f0f2f5 100%);
   --surface: rgba(255, 255, 255, 0.82);
   --surface-strong: #ffffff;
   --surface-soft: #fbfbfd;
   --text: #111113;
   --muted: #6e6e73;
   --line: rgba(17, 17, 19, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.74);
   --accent: #0071e3;
   --accent-dark: #0b1220;
   --income: #1d8f57;
   --expense: #c2413b;
   --shadow-soft: 0 18px 50px rgba(15, 23, 42, 0.08);
   --shadow-card: 0 10px 26px rgba(15, 23, 42, 0.07);
+  --brand-bg: #101014;
+  --brand-shadow: 0 10px 28px rgba(16, 16, 20, 0.18);
+  --pill-text: #2f3033;
+  --pill-bg: rgba(255, 255, 255, 0.72);
+  --chip-bg: rgba(245, 245, 247, 0.72);
+  --metric-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 250, 0.88));
+  --metric-border: rgba(255, 255, 255, 0.84);
+  --metric-hover-border: rgba(0, 113, 227, 0.18);
+  --metric-hover-shadow: 0 20px 52px rgba(15, 23, 42, 0.12);
+  --control-bg: #eef0f3;
+  --control-border: rgba(17, 17, 19, 0.05);
+  --control-text: #5f6369;
+  --control-active-bg: #ffffff;
+  --control-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+  --field-label: #4d5056;
+  --input-bg: rgba(255, 255, 255, 0.94);
+  --input-border: rgba(17, 17, 19, 0.1);
+  --input-focus-bg: #ffffff;
+  --input-focus-border: rgba(0, 113, 227, 0.58);
+  --input-focus-ring: rgba(0, 113, 227, 0.1);
+  --select-arrow: #6e6e73;
+  --placeholder: #a1a1a6;
+  --primary-bg: linear-gradient(180deg, #111113, #25272d);
+  --primary-shadow: 0 14px 28px rgba(17, 17, 19, 0.18);
+  --primary-hover-shadow: 0 18px 34px rgba(17, 17, 19, 0.22);
+  --analytics-text: #33363b;
+  --progress-track: #eceef1;
+  --empty-bg: rgba(245, 245, 247, 0.72);
+  --transaction-bg: rgba(255, 255, 255, 0.86);
+  --transaction-border: rgba(17, 17, 19, 0.07);
+  --transaction-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  --transaction-hover-border: rgba(0, 113, 227, 0.15);
+  --transaction-hover-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  --icon-button-text: #3b3d42;
+  --icon-button-bg: #f3f4f6;
+  --icon-button-hover-text: #111113;
+  --icon-button-hover-bg: #e8eaee;
+  --cancel-text: #3b3d42;
+  --cancel-bg: #eef0f3;
   --radius-card: 8px;
   --radius-control: 14px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --page: #050506;
+  --body-bg:
+    radial-gradient(circle at 16% 0%, rgba(46, 83, 126, 0.22), transparent 32%),
+    radial-gradient(circle at 86% 8%, rgba(110, 118, 130, 0.16), transparent 30%),
+    linear-gradient(180deg, #050506 0%, #101114 48%, #070708 100%);
+  --surface: rgba(28, 29, 33, 0.74);
+  --surface-strong: #1c1d21;
+  --surface-soft: #15161a;
+  --text: #f5f5f7;
+  --muted: #a1a1aa;
+  --line: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --accent: #4aa3ff;
+  --accent-dark: #eef4ff;
+  --income: #48d08b;
+  --expense: #ff766f;
+  --shadow-soft: 0 22px 58px rgba(0, 0, 0, 0.34);
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.28);
+  --brand-bg: linear-gradient(180deg, #f6f7fb, #bfc7d5);
+  --brand-shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+  --pill-text: #f4f4f6;
+  --pill-bg: rgba(255, 255, 255, 0.08);
+  --chip-bg: rgba(255, 255, 255, 0.07);
+  --metric-bg: linear-gradient(145deg, rgba(34, 36, 42, 0.92), rgba(18, 19, 23, 0.82));
+  --metric-border: rgba(255, 255, 255, 0.1);
+  --metric-hover-border: rgba(74, 163, 255, 0.34);
+  --metric-hover-shadow: 0 24px 58px rgba(0, 0, 0, 0.38);
+  --control-bg: rgba(255, 255, 255, 0.08);
+  --control-border: rgba(255, 255, 255, 0.1);
+  --control-text: #b4b7c0;
+  --control-active-bg: rgba(255, 255, 255, 0.16);
+  --control-shadow: 0 12px 26px rgba(0, 0, 0, 0.22);
+  --field-label: #c6c8d0;
+  --input-bg: rgba(255, 255, 255, 0.08);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --input-focus-bg: rgba(255, 255, 255, 0.12);
+  --input-focus-border: rgba(74, 163, 255, 0.64);
+  --input-focus-ring: rgba(74, 163, 255, 0.18);
+  --select-arrow: #c8cbd3;
+  --placeholder: #777b86;
+  --primary-bg: linear-gradient(180deg, #f4f6fb, #c8cfdb);
+  --primary-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
+  --primary-hover-shadow: 0 20px 42px rgba(0, 0, 0, 0.38);
+  --analytics-text: #e8e9ee;
+  --progress-track: rgba(255, 255, 255, 0.11);
+  --empty-bg: rgba(255, 255, 255, 0.06);
+  --transaction-bg: rgba(255, 255, 255, 0.075);
+  --transaction-border: rgba(255, 255, 255, 0.1);
+  --transaction-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  --transaction-hover-border: rgba(74, 163, 255, 0.28);
+  --transaction-hover-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+  --icon-button-text: #d3d6df;
+  --icon-button-bg: rgba(255, 255, 255, 0.08);
+  --icon-button-hover-text: #ffffff;
+  --icon-button-hover-bg: rgba(255, 255, 255, 0.14);
+  --cancel-text: #e6e8ef;
+  --cancel-bg: rgba(255, 255, 255, 0.1);
+  color-scheme: dark;
 }
 
 * {
@@ -29,8 +132,8 @@ body {
   margin: 0;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", sans-serif;
-  background:
-    linear-gradient(180deg, #ffffff 0%, var(--page) 42%, #f0f2f5 100%);
+  background: var(--body-bg);
+  transition: background 220ms ease, color 220ms ease;
 }
 
 button,
@@ -83,6 +186,12 @@ button {
   gap: 18px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -95,11 +204,15 @@ button {
   height: 44px;
   place-items: center;
   color: #fff;
-  background: #101014;
+  background: var(--brand-bg);
   border-radius: 12px;
   font-size: 18px;
   font-weight: 700;
-  box-shadow: 0 10px 28px rgba(16, 16, 20, 0.18);
+  box-shadow: var(--brand-shadow);
+}
+
+:root[data-theme="dark"] .brand-mark {
+  color: #101114;
 }
 
 .brand strong {
@@ -125,12 +238,45 @@ button {
   align-items: center;
   min-height: 36px;
   padding: 0 14px;
-  color: #2f3033;
-  background: rgba(255, 255, 255, 0.72);
+  color: var(--pill-text);
+  background: var(--pill-bg);
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(18px);
+}
+
+.theme-picker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  gap: 8px;
+  padding: 0 6px 0 12px;
+  color: var(--pill-text);
+  background: var(--pill-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(18px);
+}
+
+.theme-picker span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.theme-picker select {
+  min-height: 28px;
+  width: auto;
+  padding: 0 24px 0 8px;
+  color: var(--pill-text);
+  background-color: transparent;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .hero-grid {
@@ -165,10 +311,11 @@ button {
 .panel,
 .transactions-section {
   background: var(--surface);
-  border: 1px solid rgba(255, 255, 255, 0.74);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(20px);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .snapshot {
@@ -200,7 +347,7 @@ button {
   display: grid;
   gap: 6px;
   padding: 14px;
-  background: rgba(245, 245, 247, 0.72);
+  background: var(--chip-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
 }
@@ -229,12 +376,11 @@ button {
   overflow: hidden;
   min-height: 168px;
   padding: 24px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(245, 247, 250, 0.88));
-  border: 1px solid rgba(255, 255, 255, 0.84);
+  background: var(--metric-bg);
+  border: 1px solid var(--metric-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease;
 }
 
 .metric-card::after {
@@ -250,8 +396,8 @@ button {
 
 .metric-card:hover {
   transform: translateY(-4px) scale(1.01);
-  border-color: rgba(0, 113, 227, 0.18);
-  box-shadow: 0 20px 52px rgba(15, 23, 42, 0.12);
+  border-color: var(--metric-hover-border);
+  box-shadow: var(--metric-hover-shadow);
 }
 
 .metric-card span,
@@ -321,8 +467,8 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
-  background: #eef0f3;
-  border: 1px solid rgba(17, 17, 19, 0.05);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
   border-radius: 16px;
 }
 
@@ -340,7 +486,7 @@ button {
   display: grid;
   min-height: 42px;
   place-items: center;
-  color: #5f6369;
+  color: var(--control-text);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 650;
@@ -349,8 +495,8 @@ button {
 
 .segmented-control input:checked + span {
   color: var(--text);
-  background: #fff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
+  background: var(--control-active-bg);
+  box-shadow: var(--control-shadow);
 }
 
 .segmented-control span:hover {
@@ -363,7 +509,7 @@ button {
 }
 
 .field span {
-  color: #4d5056;
+  color: var(--field-label);
   font-size: 13px;
   font-weight: 650;
 }
@@ -380,18 +526,18 @@ select {
   min-height: 48px;
   padding: 0 14px;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(17, 17, 19, 0.1);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-control);
   outline: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease;
 }
 
 select {
   appearance: none;
   background-image:
-    linear-gradient(45deg, transparent 50%, #6e6e73 50%),
-    linear-gradient(135deg, #6e6e73 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--select-arrow) 50%),
+    linear-gradient(135deg, var(--select-arrow) 50%, transparent 50%);
   background-position:
     calc(100% - 18px) 21px,
     calc(100% - 12px) 21px;
@@ -399,32 +545,41 @@ select {
   background-repeat: no-repeat;
 }
 
+option {
+  color: var(--text);
+  background: var(--surface-strong);
+}
+
 input::placeholder {
-  color: #a1a1a6;
+  color: var(--placeholder);
 }
 
 input:focus,
 select:focus {
-  background: #fff;
-  border-color: rgba(0, 113, 227, 0.58);
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
+  background-color: var(--input-focus-bg);
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 4px var(--input-focus-ring);
 }
 
 .primary-button {
   min-height: 52px;
   color: #fff;
-  background: linear-gradient(180deg, #111113, #25272d);
+  background: var(--primary-bg);
   border-radius: 999px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
-  box-shadow: 0 14px 28px rgba(17, 17, 19, 0.18);
+  box-shadow: var(--primary-shadow);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+:root[data-theme="dark"] .primary-button {
+  color: #101114;
 }
 
 .primary-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 18px 34px rgba(17, 17, 19, 0.22);
+  box-shadow: var(--primary-hover-shadow);
 }
 
 .primary-button:active {
@@ -445,7 +600,7 @@ select:focus {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  color: #33363b;
+  color: var(--analytics-text);
   font-size: 14px;
   font-weight: 650;
 }
@@ -453,7 +608,7 @@ select:focus {
 .progress-track {
   overflow: hidden;
   height: 8px;
-  background: #eceef1;
+  background: var(--progress-track);
   border-radius: 999px;
 }
 
@@ -465,10 +620,14 @@ select:focus {
   animation: growBar 620ms ease both;
 }
 
+:root[data-theme="dark"] .progress-fill {
+  background: linear-gradient(90deg, #f5f5f7, var(--accent));
+}
+
 .empty-state {
   padding: 18px;
   color: var(--muted);
-  background: rgba(245, 245, 247, 0.72);
+  background: var(--empty-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   font-size: 14px;
@@ -490,17 +649,17 @@ select:focus {
   gap: 14px;
   align-items: center;
   padding: 16px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(17, 17, 19, 0.07);
+  background: var(--transaction-bg);
+  border: 1px solid var(--transaction-border);
   border-radius: var(--radius-card);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  box-shadow: var(--transaction-shadow);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
 .transaction-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 113, 227, 0.15);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+  border-color: var(--transaction-hover-border);
+  box-shadow: var(--transaction-hover-shadow);
 }
 
 .transaction-icon {
@@ -567,16 +726,16 @@ select:focus {
   width: 38px;
   height: 38px;
   place-items: center;
-  color: #3b3d42;
-  background: #f3f4f6;
+  color: var(--icon-button-text);
+  background: var(--icon-button-bg);
   border-radius: 999px;
   cursor: pointer;
   transition: transform 160ms ease, background 160ms ease, color 160ms ease;
 }
 
 .icon-button:hover {
-  color: #111113;
-  background: #e8eaee;
+  color: var(--icon-button-hover-text);
+  background: var(--icon-button-hover-bg);
   transform: translateY(-1px);
 }
 
@@ -625,9 +784,14 @@ select:focus {
   background: #111113;
 }
 
+:root[data-theme="dark"] .edit-form .save-button {
+  color: #101114;
+  background: #f5f5f7;
+}
+
 .edit-form .cancel-button {
-  color: #3b3d42;
-  background: #eef0f3;
+  color: var(--cancel-text);
+  background: var(--cancel-bg);
 }
 
 .edit-form .save-button:hover,
@@ -690,6 +854,11 @@ select:focus {
   .section-heading.horizontal {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .hero {
