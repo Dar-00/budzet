@@ -19,6 +19,10 @@ const elements = {
   transactionsCount: document.getElementById('transactionsCount'),
   analytics: document.getElementById('categoryAnalytics'),
   themeSelect: document.getElementById('themeSelect'),
+  casinoSection: document.querySelector('.casino-section'),
+  casinoContent: document.getElementById('casinoSimulationContent'),
+  casinoToggleButton: document.getElementById('casinoToggleButton'),
+  casinoMiniBalance: document.getElementById('casinoMiniBalance'),
   casinoBalanceLabel: document.getElementById('casinoBalanceLabel'),
   casinoCredits: document.getElementById('casinoCredits'),
   casinoGameTabs: document.querySelectorAll('[data-casino-game]'),
@@ -53,7 +57,8 @@ const elements = {
 const state = {
   transactions: loadTransactions(),
   editingId: null,
-  casino: loadCasinoState()
+  casino: loadCasinoState(),
+  casinoExpanded: false
 };
 
 initTheme();
@@ -71,6 +76,7 @@ function bindEvents() {
   elements.transactions.addEventListener('click', handleTransactionAction);
   elements.transactions.addEventListener('submit', handleEditTransaction);
   elements.transactions.addEventListener('change', handleEditFormChange);
+  elements.casinoToggleButton.addEventListener('click', handleCasinoToggle);
   elements.casinoGameTabs.forEach(button => button.addEventListener('click', handleCasinoGameChange));
   elements.casinoChipButtons.forEach(button => button.addEventListener('click', handleCasinoChipClick));
   elements.rouletteColorRadios.forEach(input => input.addEventListener('change', handleRouletteChoiceChange));
@@ -84,6 +90,11 @@ function handleThemeChange(event) {
   const theme = event.target.value;
   applyTheme(theme);
   saveTheme(theme);
+}
+
+function handleCasinoToggle() {
+  state.casinoExpanded = !state.casinoExpanded;
+  renderCasinoVisibility();
 }
 
 function handleCasinoGameChange(event) {
@@ -628,9 +639,17 @@ function initCasino() {
 }
 
 function renderCasino() {
+  renderCasinoVisibility();
   renderCasinoControls();
   renderCasinoStage();
   renderCasinoHistory();
+}
+
+function renderCasinoVisibility() {
+  elements.casinoContent.hidden = !state.casinoExpanded;
+  elements.casinoSection.classList.toggle('is-collapsed', !state.casinoExpanded);
+  elements.casinoToggleButton.setAttribute('aria-expanded', String(state.casinoExpanded));
+  elements.casinoToggleButton.textContent = state.casinoExpanded ? 'Zminimalizuj' : 'Rozwiń symulator';
 }
 
 function renderCasinoControls() {
@@ -644,6 +663,7 @@ function renderCasinoControls() {
   state.casino.stake = balanceEmpty ? 0 : clampCasinoStake(state.casino.stake);
   elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
   elements.casinoCredits.textContent = formatCasinoAmount(availableBalance);
+  elements.casinoMiniBalance.textContent = formatCasinoAmount(availableBalance);
   elements.casinoPlayButton.textContent = gameMeta.action;
   elements.casinoPlayButton.disabled = balanceEmpty;
   elements.casinoResetButton.hidden = !hasCasinoTransactions && state.casino.history.length === 0;
