@@ -985,18 +985,25 @@ select:focus {
 
 .casino-chip-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
 .casino-chip-row button {
-  min-height: 38px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 8px;
   color: rgba(246, 247, 251, 0.82);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 999px;
   cursor: pointer;
+  font-size: 13px;
   font-weight: 750;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: transform 160ms ease, background 160ms ease, color 160ms ease;
 }
 
@@ -1533,6 +1540,10 @@ select:focus {
   .casino-game-tabs {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .casino-chip-row {
+    grid-template-columns: repeat(4, minmax(104px, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -1615,6 +1626,10 @@ select:focus {
   .casino-game-tabs,
   .roulette-choice-row {
     grid-template-columns: 1fr;
+  }
+
+  .casino-chip-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .blackjack-hands {
