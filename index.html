@@ -147,6 +147,113 @@
 
       <div id="transactions" class="transactions-list"></div>
     </section>
+
+    <section class="casino-section" aria-labelledby="casinoTitle">
+      <div class="casino-shell">
+        <header class="casino-header">
+          <div class="casino-title-block">
+            <p class="casino-kicker">DEMO ONLY / SIMULATION</p>
+            <h2 id="casinoTitle">Casino Simulation Mode</h2>
+            <p>Ten moduł jest fikcyjną symulacją interfejsu i nie korzysta z prawdziwych pieniędzy.</p>
+          </div>
+
+          <aside class="casino-balance-card" aria-label="Saldo demo credits">
+            <span id="casinoBalanceLabel">Demo credits</span>
+            <strong id="casinoCredits">1000</strong>
+            <small>Odseparowane od budżetu domowego</small>
+          </aside>
+        </header>
+
+        <div class="casino-grid">
+          <aside class="casino-control-card" aria-label="Sterowanie symulacją">
+            <div class="casino-game-tabs" role="group" aria-label="Wybór gry demonstracyjnej">
+              <button type="button" class="casino-game-tab is-active" data-casino-game="blackjack">Blackjack</button>
+              <button type="button" class="casino-game-tab" data-casino-game="roulette">Roulette</button>
+              <button type="button" class="casino-game-tab" data-casino-game="slots">Slots</button>
+            </div>
+
+            <div class="casino-bet-panel">
+              <label class="casino-field">
+                <span>Demo stake</span>
+                <input type="number" id="casinoBetInput" min="10" step="5" value="50" aria-describedby="casinoBetHint">
+              </label>
+
+              <div class="casino-chip-row" aria-label="Szybki wybór demo stake">
+                <button type="button" data-bet-chip="25">25</button>
+                <button type="button" data-bet-chip="50">50</button>
+                <button type="button" data-bet-chip="100">100</button>
+                <button type="button" data-bet-chip="200">200</button>
+              </div>
+
+              <p class="casino-bet-hint" id="casinoBetHint">Maksymalny demo stake jest limitowany i nigdy nie korzysta z budżetu domowego.</p>
+            </div>
+
+            <div class="casino-currency-panel">
+              <label class="casino-field">
+                <span>Format salda</span>
+                <select id="casinoCurrencySelect" aria-label="Format salda casino simulation">
+                  <option value="credits">Demo credits</option>
+                  <option value="budget">PLN demo jak w budżecie</option>
+                </select>
+              </label>
+              <p class="casino-bet-hint">Zmienia tylko sposób wyświetlania fikcyjnego salda. Nie łączy symulatora z budżetem domowym.</p>
+            </div>
+
+            <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
+              <span>Roulette choice</span>
+              <div class="roulette-choice-row">
+                <label class="roulette-choice red">
+                  <input type="radio" name="rouletteColor" value="red" checked>
+                  <span>Red</span>
+                </label>
+                <label class="roulette-choice black">
+                  <input type="radio" name="rouletteColor" value="black">
+                  <span>Black</span>
+                </label>
+                <label class="roulette-choice green">
+                  <input type="radio" name="rouletteColor" value="green">
+                  <span>Green</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="button" class="casino-play-button" id="casinoPlayButton">Deal demo round</button>
+            <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Reset demo balance</button>
+
+            <p class="casino-safety-note">Fictional credits i PLN demo nie mają wartości pieniężnej. Brak długu, brak real money flow, brak połączenia z przychodami lub wydatkami.</p>
+          </aside>
+
+          <section class="casino-stage-card" aria-live="polite">
+            <div class="jackpot-banner" id="casinoJackpotBanner" hidden>
+              <span>Symbolic jackpot event</span>
+              <strong>Rzadki bonus demo credits</strong>
+            </div>
+
+            <div class="casino-stage-heading">
+              <div>
+                <p class="casino-kicker" id="casinoModeLabel">Blackjack Simulation</p>
+                <h3 id="casinoGameTitle">Blackjack Simulation</h3>
+              </div>
+              <span class="casino-round-status" id="casinoRoundStatus">Ready</span>
+            </div>
+
+            <div class="casino-stage" id="casinoStage"></div>
+            <div class="casino-result" id="casinoResult">Wybierz demo stake i uruchom fikcyjną rundę.</div>
+          </section>
+        </div>
+
+        <section class="casino-history-card" aria-labelledby="casinoHistoryTitle">
+          <div class="section-heading horizontal">
+            <div>
+              <p class="casino-kicker">Simulation log</p>
+              <h3 id="casinoHistoryTitle">Ostatnie wyniki</h3>
+            </div>
+            <span class="casino-history-count" id="casinoHistoryCount">0 rund</span>
+          </div>
+          <div class="casino-history-list" id="casinoHistory"></div>
+        </section>
+      </div>
+    </section>
   </main>
 
   <script src="script.js"></script>

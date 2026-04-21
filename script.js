@@ -1,5 +1,10 @@
 const storageKey = 'premium-budget-transactions';
 const themeStorageKey = 'premium-budget-theme';
+const casinoStorageKey = 'premium-budget-casino-demo';
+const casinoInitialCredits = 1000;
+const casinoHistoryLimit = 6;
+const casinoMaxStake = 200;
+const casinoMaxStakeRatio = 0.25;
 
 const categories = {
   income: ['Wynagrodzenie', 'Premia', 'Zwrot', 'Inwestycje', 'Inne'],
@@ -13,6 +18,25 @@ const elements = {
   transactionsCount: document.getElementById('transactionsCount'),
   analytics: document.getElementById('categoryAnalytics'),
   themeSelect: document.getElementById('themeSelect'),
+  casinoBalanceLabel: document.getElementById('casinoBalanceLabel'),
+  casinoCredits: document.getElementById('casinoCredits'),
+  casinoCurrencySelect: document.getElementById('casinoCurrencySelect'),
+  casinoGameTabs: document.querySelectorAll('[data-casino-game]'),
+  casinoBetInput: document.getElementById('casinoBetInput'),
+  casinoBetHint: document.getElementById('casinoBetHint'),
+  casinoChipButtons: document.querySelectorAll('[data-bet-chip]'),
+  rouletteChoicePanel: document.getElementById('rouletteChoicePanel'),
+  rouletteColorRadios: document.querySelectorAll('input[name="rouletteColor"]'),
+  casinoPlayButton: document.getElementById('casinoPlayButton'),
+  casinoResetButton: document.getElementById('casinoResetButton'),
+  casinoStage: document.getElementById('casinoStage'),
+  casinoResult: document.getElementById('casinoResult'),
+  casinoJackpotBanner: document.getElementById('casinoJackpotBanner'),
+  casinoRoundStatus: document.getElementById('casinoRoundStatus'),
+  casinoModeLabel: document.getElementById('casinoModeLabel'),
+  casinoGameTitle: document.getElementById('casinoGameTitle'),
+  casinoHistory: document.getElementById('casinoHistory'),
+  casinoHistoryCount: document.getElementById('casinoHistoryCount'),
   monthStatus: document.getElementById('monthStatus'),
   income: document.getElementById('income'),
   expenses: document.getElementById('expenses'),
@@ -28,10 +52,12 @@ const elements = {
 
 const state = {
   transactions: loadTransactions(),
-  editingId: null
+  editingId: null,
+  casino: loadCasinoState()
 };
 
 initTheme();
+initCasino();
 setMonthStatus();
 setDefaultDate();
 fillCategorySelect(elements.category, getSelectedType(elements.form));
@@ -45,12 +71,102 @@ function bindEvents() {
   elements.transactions.addEventListener('click', handleTransactionAction);
   elements.transactions.addEventListener('submit', handleEditTransaction);
   elements.transactions.addEventListener('change', handleEditFormChange);
+  elements.casinoGameTabs.forEach(button => button.addEventListener('click', handleCasinoGameChange));
+  elements.casinoChipButtons.forEach(button => button.addEventListener('click', handleCasinoChipClick));
+  elements.rouletteColorRadios.forEach(input => input.addEventListener('change', handleRouletteChoiceChange));
+  elements.casinoCurrencySelect.addEventListener('change', handleCasinoCurrencyChange);
+  elements.casinoBetInput.addEventListener('input', handleCasinoStakeInput);
+  elements.casinoBetInput.addEventListener('change', handleCasinoStakeCommit);
+  elements.casinoPlayButton.addEventListener('click', handleCasinoPlay);
+  elements.casinoResetButton.addEventListener('click', handleCasinoReset);
 }
 
 function handleThemeChange(event) {
   const theme = event.target.value;
   applyTheme(theme);
   saveTheme(theme);
+}
+
+function handleCasinoGameChange(event) {
+  const game = event.currentTarget.dataset.casinoGame;
+
+  if (!['blackjack', 'roulette', 'slots'].includes(game)) {
+    return;
+  }
+
+  state.casino.game = game;
+  state.casino.lastRound = null;
+  state.casino.status = 'Ready';
+  saveCasinoState();
+  renderCasino();
+}
+
+function handleCasinoChipClick(event) {
+  state.casino.stake = clampCasinoStake(Number(event.currentTarget.dataset.betChip));
+  state.casino.lastRound = null;
+  saveCasinoState();
+  renderCasino();
+}
+
+function handleCasinoStakeInput(event) {
+  state.casino.stake = clampCasinoStake(Number(event.target.value));
+  renderCasinoControls();
+}
+
+function handleCasinoStakeCommit() {
+  state.casino.stake = clampCasinoStake(state.casino.stake);
+  saveCasinoState();
+  renderCasinoControls();
+}
+
+function handleCasinoCurrencyChange(event) {
+  state.casino.currencyMode = event.target.value === 'budget' ? 'budget' : 'credits';
+  saveCasinoState();
+  renderCasino();
+}
+
+function handleRouletteChoiceChange() {
+  state.casino.lastRound = null;
+  renderCasinoStage();
+}
+
+function handleCasinoPlay() {
+  if (state.casino.credits <= 0) {
+    renderCasino();
+    return;
+  }
+
+  const stake = clampCasinoStake(state.casino.stake);
+
+  if (stake <= 0) {
+    renderCasino();
+    return;
+  }
+
+  const round = playCasinoRound(state.casino.game, stake);
+  const nextCredits = Math.max(0, state.casino.credits + round.delta);
+
+  state.casino.credits = nextCredits;
+  state.casino.stake = clampCasinoStake(stake);
+  state.casino.lastRound = round;
+  state.casino.status = round.label;
+  state.casino.history = [
+    createCasinoHistoryEntry(round, nextCredits),
+    ...state.casino.history
+  ].slice(0, casinoHistoryLimit);
+
+  saveCasinoState();
+  renderCasino();
+}
+
+function handleCasinoReset() {
+  state.casino.credits = casinoInitialCredits;
+  state.casino.stake = 50;
+  state.casino.history = [];
+  state.casino.lastRound = null;
+  state.casino.status = 'Ready';
+  saveCasinoState();
+  renderCasino();
 }
 
 function handleCreateFormChange(event) {
@@ -503,6 +619,673 @@ function getSelectedType(form) {
   return form.elements.type.value;
 }
 
+function initCasino() {
+  state.casino.stake = clampCasinoStake(state.casino.stake);
+  renderCasino();
+}
+
+function renderCasino() {
+  renderCasinoControls();
+  renderCasinoStage();
+  renderCasinoHistory();
+}
+
+function renderCasinoControls() {
+  const minStake = getCasinoMinStake();
+  const maxStake = getCasinoMaxStake();
+  const creditsEmpty = state.casino.credits <= 0;
+  const gameMeta = getCasinoGameMeta(state.casino.game);
+
+  elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
+  elements.casinoCredits.textContent = formatCasinoAmount(state.casino.credits, { compact: true });
+  elements.casinoCurrencySelect.value = state.casino.currencyMode;
+  elements.casinoPlayButton.textContent = gameMeta.action;
+  elements.casinoPlayButton.disabled = creditsEmpty;
+  elements.casinoResetButton.hidden = !creditsEmpty;
+  elements.rouletteChoicePanel.hidden = state.casino.game !== 'roulette';
+  elements.casinoBetInput.disabled = creditsEmpty;
+  elements.casinoBetInput.min = String(minStake);
+  elements.casinoBetInput.max = String(maxStake);
+  elements.casinoBetInput.value = String(state.casino.stake);
+  elements.casinoModeLabel.textContent = gameMeta.label;
+  elements.casinoGameTitle.textContent = gameMeta.label;
+  elements.casinoRoundStatus.textContent = creditsEmpty ? 'Demo balance empty' : state.casino.status;
+
+  elements.casinoBetHint.textContent = creditsEmpty
+    ? `Saldo ${getCasinoBalanceLabel()} wynosi 0. Możesz zresetować wyłącznie fikcyjne demo balance.`
+    : `Limit rundy: ${formatCasinoAmount(minStake)}-${formatCasinoAmount(maxStake)}. Budżet domowy pozostaje odseparowany.`;
+
+  elements.casinoGameTabs.forEach(button => {
+    const isActive = button.dataset.casinoGame === state.casino.game;
+    button.classList.toggle('is-active', isActive);
+  });
+
+  elements.casinoChipButtons.forEach(button => {
+    const value = Number(button.dataset.betChip);
+    button.disabled = creditsEmpty || value > maxStake || value < minStake;
+    button.textContent = formatCasinoAmount(value, { compact: true });
+  });
+}
+
+function renderCasinoStage() {
+  const round = state.casino.lastRound;
+  const currentRound = round && round.game === state.casino.game ? round : null;
+
+  elements.casinoStage.innerHTML = '';
+  elements.casinoStage.appendChild(createCasinoStageView(state.casino.game, currentRound));
+  elements.casinoJackpotBanner.hidden = !currentRound || currentRound.type !== 'jackpot';
+  elements.casinoResult.className = `casino-result ${currentRound ? getCasinoResultClass(currentRound.type) : ''}`.trim();
+  elements.casinoResult.textContent = currentRound
+    ? currentRound.message
+    : 'Wybierz demo stake i uruchom fikcyjną rundę.';
+}
+
+function renderCasinoHistory() {
+  elements.casinoHistory.innerHTML = '';
+  elements.casinoHistoryCount.textContent = formatCount(
+    state.casino.history.length,
+    'runda',
+    'rundy',
+    'rund'
+  );
+
+  if (state.casino.history.length === 0) {
+    elements.casinoHistory.appendChild(createCasinoEmptyState('Historia pokaże tylko wyniki fikcyjnych rund demo.'));
+    return;
+  }
+
+  state.casino.history.forEach(entry => {
+    const item = document.createElement('article');
+    item.className = 'casino-history-item';
+
+    const meta = document.createElement('div');
+    meta.className = 'casino-history-meta';
+
+    const title = document.createElement('strong');
+    title.textContent = `${entry.gameName} · ${entry.label}`;
+
+    const detail = document.createElement('span');
+    detail.textContent = `${entry.detail} · saldo: ${formatCasinoAmount(entry.creditsAfter)}`;
+
+    const delta = document.createElement('div');
+    delta.className = `casino-history-delta ${entry.delta > 0 ? 'win' : entry.delta < 0 ? 'loss' : 'neutral'}`;
+    delta.textContent = `${entry.delta > 0 ? '+' : ''}${formatCasinoAmount(entry.delta, { compact: true })}`;
+
+    meta.append(title, detail);
+    item.append(meta, delta);
+    elements.casinoHistory.appendChild(item);
+  });
+}
+
+function createCasinoStageView(game, round) {
+  if (game === 'roulette') {
+    return createRouletteView(round);
+  }
+
+  if (game === 'slots') {
+    return createSlotsView(round);
+  }
+
+  return createBlackjackView(round);
+}
+
+function createBlackjackView(round) {
+  const visual = round ? round.visual : createBlackjackPreview();
+  const table = document.createElement('div');
+  table.className = 'blackjack-table';
+
+  const hands = document.createElement('div');
+  hands.className = 'blackjack-hands';
+  hands.append(
+    createBlackjackHand('Demo player', visual.playerCards, visual.playerTotal),
+    createBlackjackHand('Dealer UI', visual.dealerCards, visual.dealerTotal)
+  );
+
+  table.appendChild(hands);
+  return table;
+}
+
+function createBlackjackHand(label, cards, total) {
+  const hand = document.createElement('div');
+  hand.className = 'blackjack-hand';
+
+  const title = document.createElement('span');
+  title.textContent = label;
+
+  const cardRow = document.createElement('div');
+  cardRow.className = 'blackjack-cards';
+
+  cards.forEach(card => {
+    const cardElement = document.createElement('div');
+    cardElement.className = `playing-card ${card.color === 'red' ? 'red-card' : ''}`;
+    cardElement.textContent = card.rank;
+    cardRow.appendChild(cardElement);
+  });
+
+  const totalElement = document.createElement('div');
+  totalElement.className = 'hand-total';
+  totalElement.textContent = `${total} points`;
+
+  hand.append(title, cardRow, totalElement);
+  return hand;
+}
+
+function createRouletteView(round) {
+  const visual = round ? round.visual : { color: 'black', number: '--', choice: getSelectedRouletteColor(), spinning: false };
+  const table = document.createElement('div');
+  table.className = 'roulette-table';
+
+  const label = document.createElement('span');
+  label.className = 'roulette-label';
+  label.textContent = `Demo pick: ${visual.choice}`;
+
+  const wheel = document.createElement('div');
+  wheel.className = `roulette-wheel ${visual.spinning ? 'is-spinning' : ''}`;
+
+  const ball = document.createElement('div');
+  ball.className = 'roulette-ball';
+
+  const outcome = document.createElement('div');
+  outcome.className = `roulette-outcome ${visual.color}`;
+  outcome.textContent = visual.number;
+
+  const summary = document.createElement('div');
+  summary.className = 'roulette-summary';
+  summary.textContent = round ? `Result: ${visual.color}` : 'Fictional roulette interface preview';
+
+  wheel.append(ball, outcome);
+  table.append(label, wheel, summary);
+  return table;
+}
+
+function createSlotsView(round) {
+  const visual = round ? round.visual : { reels: ['BAR', '7', 'GEM'], spinning: false };
+  const table = document.createElement('div');
+  table.className = 'slot-table';
+
+  const label = document.createElement('span');
+  label.className = 'slot-label';
+  label.textContent = 'Slot Machine Simulation';
+
+  const reels = document.createElement('div');
+  reels.className = 'slot-reels';
+
+  visual.reels.forEach(symbol => {
+    const reel = document.createElement('div');
+    reel.className = `slot-reel ${visual.spinning ? 'is-spinning' : ''}`;
+    reel.textContent = symbol;
+    reels.appendChild(reel);
+  });
+
+  const summary = document.createElement('div');
+  summary.className = 'slot-summary';
+  summary.textContent = round ? visual.pattern : 'Three demo reels, fictional credits only';
+
+  table.append(label, reels, summary);
+  return table;
+}
+
+function playCasinoRound(game, stake) {
+  if (game === 'roulette') {
+    return playRouletteRound(stake);
+  }
+
+  if (game === 'slots') {
+    return playSlotsRound(stake);
+  }
+
+  return playBlackjackRound(stake);
+}
+
+function playBlackjackRound(stake) {
+  const outcome = weightedCasinoOutcome([
+    ['jackpot', 0.012],
+    ['bonus', 0.14],
+    ['standard', 0.34],
+    ['loss', 0.508]
+  ]);
+  const visual = createBlackjackOutcome(outcome);
+  const gameName = 'Blackjack Simulation';
+
+  if (outcome === 'jackpot') {
+    const delta = calculateCasinoJackpot(stake);
+    return createCasinoRound({
+      game: 'blackjack',
+      gameName,
+      type: 'jackpot',
+      label: 'Jackpot event',
+      delta,
+      stake,
+      detail: 'Blackjack demo hand',
+      message: `Symboliczny jackpot event: +${formatCasinoAmount(delta)}. To nadal fikcyjna symulacja UI.`,
+      visual
+    });
+  }
+
+  if (outcome === 'bonus') {
+    const delta = Math.ceil(stake * 1.8);
+    return createCasinoRound({
+      game: 'blackjack',
+      gameName,
+      type: 'bonus',
+      label: 'Bonus win',
+      delta,
+      stake,
+      detail: 'Clean 21 in demo hand',
+      message: `Bonus win: +${formatCasinoAmount(delta)} za demonstracyjną rękę 21.`,
+      visual
+    });
+  }
+
+  if (outcome === 'standard') {
+    return createCasinoRound({
+      game: 'blackjack',
+      gameName,
+      type: 'standard',
+      label: 'Standard win',
+      delta: stake,
+      stake,
+      detail: 'Player total beats dealer UI',
+      message: `Standard win: +${formatCasinoAmount(stake)} w rundzie blackjack simulation.`,
+      visual
+    });
+  }
+
+  const delta = -Math.ceil(stake * 0.55);
+  return createCasinoRound({
+    game: 'blackjack',
+    gameName,
+    type: 'loss',
+    label: 'Small loss',
+    delta,
+    stake,
+    detail: 'Dealer UI has higher total',
+    message: `Small loss: ${formatCasinoAmount(delta)}. Saldo nie może zejść poniżej 0.`,
+    visual
+  });
+}
+
+function playRouletteRound(stake) {
+  const choice = getSelectedRouletteColor();
+  const result = getRouletteResult();
+  const isMatch = choice === result.color;
+  const gameName = 'Roulette Simulation';
+  const visual = {
+    choice,
+    color: result.color,
+    number: result.number,
+    spinning: true
+  };
+
+  if (isMatch && result.color === 'green' && Math.random() < 0.22) {
+    const delta = calculateCasinoJackpot(stake);
+    return createCasinoRound({
+      game: 'roulette',
+      gameName,
+      type: 'jackpot',
+      label: 'Jackpot event',
+      delta,
+      stake,
+      detail: `Green ${result.number}`,
+      message: `Symboliczny jackpot event: +${formatCasinoAmount(delta)} po trafieniu green.`,
+      visual
+    });
+  }
+
+  if (isMatch && result.color === 'green') {
+    const delta = Math.ceil(stake * 4);
+    return createCasinoRound({
+      game: 'roulette',
+      gameName,
+      type: 'bonus',
+      label: 'Bonus win',
+      delta,
+      stake,
+      detail: `Green ${result.number}`,
+      message: `Bonus win: +${formatCasinoAmount(delta)} za trafienie green.`,
+      visual
+    });
+  }
+
+  if (isMatch) {
+    return createCasinoRound({
+      game: 'roulette',
+      gameName,
+      type: 'standard',
+      label: 'Standard win',
+      delta: stake,
+      stake,
+      detail: `${capitalize(result.color)} ${result.number}`,
+      message: `Standard win: +${formatCasinoAmount(stake)}. Wynik fikcyjnej ruletki: ${result.color}.`,
+      visual
+    });
+  }
+
+  const delta = -Math.ceil(stake * 0.6);
+  return createCasinoRound({
+    game: 'roulette',
+    gameName,
+    type: 'loss',
+    label: 'Small loss',
+    delta,
+    stake,
+    detail: `${capitalize(result.color)} ${result.number}`,
+    message: `Small loss: ${formatCasinoAmount(delta)}. Wynik fikcyjnej ruletki: ${result.color}.`,
+    visual
+  });
+}
+
+function playSlotsRound(stake) {
+  const outcome = weightedCasinoOutcome([
+    ['jackpot', 0.012],
+    ['bonus', 0.15],
+    ['standard', 0.31],
+    ['loss', 0.528]
+  ]);
+  const visual = createSlotsOutcome(outcome);
+  const gameName = 'Slot Machine Simulation';
+
+  if (outcome === 'jackpot') {
+    const delta = calculateCasinoJackpot(stake);
+    return createCasinoRound({
+      game: 'slots',
+      gameName,
+      type: 'jackpot',
+      label: 'Jackpot event',
+      delta,
+      stake,
+      detail: visual.pattern,
+      message: `Symboliczny jackpot event: +${formatCasinoAmount(delta)} na fikcyjnych rolkach.`,
+      visual
+    });
+  }
+
+  if (outcome === 'bonus') {
+    const delta = Math.ceil(stake * 2.2);
+    return createCasinoRound({
+      game: 'slots',
+      gameName,
+      type: 'bonus',
+      label: 'Bonus win',
+      delta,
+      stake,
+      detail: visual.pattern,
+      message: `Bonus win: +${formatCasinoAmount(delta)} za kombinację ${visual.pattern}.`,
+      visual
+    });
+  }
+
+  if (outcome === 'standard') {
+    return createCasinoRound({
+      game: 'slots',
+      gameName,
+      type: 'standard',
+      label: 'Standard win',
+      delta: stake,
+      stake,
+      detail: visual.pattern,
+      message: `Standard win: +${formatCasinoAmount(stake)} za prostą kombinację symboli.`,
+      visual
+    });
+  }
+
+  const delta = -Math.ceil(stake * 0.5);
+  return createCasinoRound({
+    game: 'slots',
+    gameName,
+    type: 'loss',
+    label: 'Small loss',
+    delta,
+    stake,
+    detail: visual.pattern,
+    message: `Small loss: ${formatCasinoAmount(delta)}. To wyłącznie demonstracyjna runda.`,
+    visual
+  });
+}
+
+function createCasinoRound(round) {
+  return {
+    id: createId(),
+    createdAt: new Date().toISOString(),
+    ...round
+  };
+}
+
+function createCasinoHistoryEntry(round, creditsAfter) {
+  return {
+    id: round.id,
+    gameName: round.gameName,
+    label: round.label,
+    detail: round.detail,
+    delta: round.delta,
+    creditsAfter,
+    createdAt: round.createdAt
+  };
+}
+
+function createBlackjackPreview() {
+  return {
+    playerCards: [
+      { rank: 'A', color: 'black' },
+      { rank: 'K', color: 'red' }
+    ],
+    dealerCards: [
+      { rank: '10', color: 'black' },
+      { rank: '8', color: 'red' }
+    ],
+    playerTotal: 21,
+    dealerTotal: 18
+  };
+}
+
+function createBlackjackOutcome(outcome) {
+  const outcomes = {
+    jackpot: {
+      playerCards: [
+        { rank: 'A', color: 'black' },
+        { rank: 'K', color: 'red' }
+      ],
+      dealerCards: [
+        { rank: 'Q', color: 'black' },
+        { rank: '9', color: 'red' }
+      ],
+      playerTotal: 21,
+      dealerTotal: 19
+    },
+    bonus: {
+      playerCards: [
+        { rank: 'A', color: 'red' },
+        { rank: '10', color: 'black' }
+      ],
+      dealerCards: [
+        { rank: '9', color: 'black' },
+        { rank: '8', color: 'red' }
+      ],
+      playerTotal: 21,
+      dealerTotal: 17
+    },
+    standard: {
+      playerCards: [
+        { rank: '10', color: 'black' },
+        { rank: '9', color: 'red' }
+      ],
+      dealerCards: [
+        { rank: '8', color: 'black' },
+        { rank: '8', color: 'red' }
+      ],
+      playerTotal: 19,
+      dealerTotal: 16
+    },
+    loss: {
+      playerCards: [
+        { rank: '10', color: 'red' },
+        { rank: '6', color: 'black' }
+      ],
+      dealerCards: [
+        { rank: '10', color: 'black' },
+        { rank: '9', color: 'red' }
+      ],
+      playerTotal: 16,
+      dealerTotal: 19
+    }
+  };
+
+  return outcomes[outcome] || outcomes.standard;
+}
+
+function getRouletteResult() {
+  const color = weightedCasinoOutcome([
+    ['red', 0.485],
+    ['black', 0.485],
+    ['green', 0.03]
+  ]);
+  const number = color === 'green' ? '0' : String(randomInt(1, 36));
+  return { color, number };
+}
+
+function createSlotsOutcome(outcome) {
+  const symbols = ['7', 'BAR', 'GEM', 'ACE', 'STAR'];
+
+  if (outcome === 'jackpot') {
+    return {
+      reels: ['7', '7', '7'],
+      pattern: '7 / 7 / 7',
+      spinning: true
+    };
+  }
+
+  if (outcome === 'bonus') {
+    const symbol = randomFrom(['GEM', 'BAR', 'STAR']);
+    return {
+      reels: [symbol, symbol, symbol],
+      pattern: `${symbol} / ${symbol} / ${symbol}`,
+      spinning: true
+    };
+  }
+
+  if (outcome === 'standard') {
+    const symbol = randomFrom(symbols);
+    const third = randomFrom(symbols.filter(item => item !== symbol));
+    return {
+      reels: [symbol, symbol, third],
+      pattern: `${symbol} / ${symbol} / ${third}`,
+      spinning: true
+    };
+  }
+
+  const reels = shuffleArray([...symbols]).slice(0, 3);
+  return {
+    reels,
+    pattern: reels.join(' / '),
+    spinning: true
+  };
+}
+
+function getCasinoGameMeta(game) {
+  const games = {
+    blackjack: {
+      label: 'Blackjack Simulation',
+      action: 'Deal demo round'
+    },
+    roulette: {
+      label: 'Roulette Simulation',
+      action: 'Spin demo wheel'
+    },
+    slots: {
+      label: 'Slot Machine Simulation',
+      action: 'Spin demo reels'
+    }
+  };
+
+  return games[game] || games.blackjack;
+}
+
+function getCasinoResultClass(type) {
+  if (type === 'jackpot') {
+    return 'is-jackpot';
+  }
+
+  if (type === 'loss') {
+    return 'is-loss';
+  }
+
+  return 'is-win';
+}
+
+function getSelectedRouletteColor() {
+  const selected = [...elements.rouletteColorRadios].find(input => input.checked);
+  return selected ? selected.value : 'red';
+}
+
+function getCasinoMaxStake() {
+  if (state.casino.credits <= 0) {
+    return 0;
+  }
+
+  return Math.max(1, Math.min(casinoMaxStake, Math.floor(state.casino.credits * casinoMaxStakeRatio)));
+}
+
+function getCasinoMinStake() {
+  const maxStake = getCasinoMaxStake();
+  return maxStake > 0 ? Math.min(10, maxStake) : 0;
+}
+
+function clampCasinoStake(value) {
+  const minStake = getCasinoMinStake();
+  const maxStake = getCasinoMaxStake();
+
+  if (maxStake <= 0) {
+    return 0;
+  }
+
+  if (!Number.isFinite(value)) {
+    return minStake;
+  }
+
+  return Math.min(maxStake, Math.max(minStake, Math.floor(value)));
+}
+
+function calculateCasinoJackpot(stake) {
+  return Math.min(300, Math.max(75, stake * 4));
+}
+
+function weightedCasinoOutcome(weightedItems) {
+  const roll = Math.random();
+  let cursor = 0;
+
+  for (const [value, weight] of weightedItems) {
+    cursor += weight;
+
+    if (roll <= cursor) {
+      return value;
+    }
+  }
+
+  return weightedItems[weightedItems.length - 1][0];
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomFrom(items) {
+  return items[randomInt(0, items.length - 1)];
+}
+
+function shuffleArray(items) {
+  return items
+    .map(item => ({ item, order: Math.random() }))
+    .sort((first, second) => first.order - second.order)
+    .map(entry => entry.item);
+}
+
+function createCasinoEmptyState(text) {
+  const empty = document.createElement('div');
+  empty.className = 'casino-empty-state';
+  empty.textContent = text;
+  return empty;
+}
+
 function initTheme() {
   const theme = loadTheme();
   applyTheme(theme);
@@ -528,6 +1311,82 @@ function loadTheme() {
   } catch {
     return 'light';
   }
+}
+
+function saveCasinoState() {
+  try {
+    localStorage.setItem(casinoStorageKey, JSON.stringify({
+      credits: state.casino.credits,
+      game: state.casino.game,
+      stake: state.casino.stake,
+      currencyMode: state.casino.currencyMode,
+      history: state.casino.history
+    }));
+  } catch {
+    return;
+  }
+}
+
+function loadCasinoState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(casinoStorageKey));
+
+    if (!saved || typeof saved !== 'object') {
+      return createDefaultCasinoState();
+    }
+
+    return {
+      credits: normalizeCasinoCredits(saved.credits),
+      game: ['blackjack', 'roulette', 'slots'].includes(saved.game) ? saved.game : 'blackjack',
+      stake: Number.isFinite(Number(saved.stake)) ? Number(saved.stake) : 50,
+      currencyMode: saved.currencyMode === 'budget' ? 'budget' : 'credits',
+      status: 'Ready',
+      lastRound: null,
+      history: Array.isArray(saved.history)
+        ? saved.history.map(normalizeCasinoHistoryEntry).filter(Boolean).slice(0, casinoHistoryLimit)
+        : []
+    };
+  } catch {
+    return createDefaultCasinoState();
+  }
+}
+
+function createDefaultCasinoState() {
+  return {
+    credits: casinoInitialCredits,
+    game: 'blackjack',
+    stake: 50,
+    currencyMode: 'credits',
+    status: 'Ready',
+    lastRound: null,
+    history: []
+  };
+}
+
+function normalizeCasinoCredits(value) {
+  const credits = Math.floor(Number(value));
+
+  if (!Number.isFinite(credits) || credits < 0) {
+    return casinoInitialCredits;
+  }
+
+  return credits;
+}
+
+function normalizeCasinoHistoryEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return null;
+  }
+
+  return {
+    id: String(entry.id || createId()),
+    gameName: String(entry.gameName || 'Casino Simulation'),
+    label: String(entry.label || 'Demo round'),
+    detail: String(entry.detail || 'Fictional result'),
+    delta: Math.trunc(Number(entry.delta) || 0),
+    creditsAfter: normalizeCasinoCredits(entry.creditsAfter),
+    createdAt: entry.createdAt || new Date().toISOString()
+  };
 }
 
 function saveTransactions() {
@@ -590,6 +1449,26 @@ function formatCurrency(value) {
     currency: 'PLN',
     maximumFractionDigits: 2
   }).format(value);
+}
+
+function formatDemoCredits(value) {
+  return new Intl.NumberFormat('pl-PL', {
+    maximumFractionDigits: 0
+  }).format(value);
+}
+
+function formatCasinoAmount(value, options = {}) {
+  if (state.casino.currencyMode === 'budget') {
+    const amount = formatCurrency(value);
+    return options.compact ? amount : `${amount} demo`;
+  }
+
+  const amount = formatDemoCredits(value);
+  return options.compact ? amount : `${amount} demo credits`;
+}
+
+function getCasinoBalanceLabel() {
+  return state.casino.currencyMode === 'budget' ? 'PLN demo' : 'Demo credits';
 }
 
 function formatDate(value) {
