@@ -20,7 +20,6 @@ const elements = {
   themeSelect: document.getElementById('themeSelect'),
   casinoBalanceLabel: document.getElementById('casinoBalanceLabel'),
   casinoCredits: document.getElementById('casinoCredits'),
-  casinoCurrencySelect: document.getElementById('casinoCurrencySelect'),
   casinoGameTabs: document.querySelectorAll('[data-casino-game]'),
   casinoBetInput: document.getElementById('casinoBetInput'),
   casinoBetHint: document.getElementById('casinoBetHint'),
@@ -74,7 +73,6 @@ function bindEvents() {
   elements.casinoGameTabs.forEach(button => button.addEventListener('click', handleCasinoGameChange));
   elements.casinoChipButtons.forEach(button => button.addEventListener('click', handleCasinoChipClick));
   elements.rouletteColorRadios.forEach(input => input.addEventListener('change', handleRouletteChoiceChange));
-  elements.casinoCurrencySelect.addEventListener('change', handleCasinoCurrencyChange);
   elements.casinoBetInput.addEventListener('input', handleCasinoStakeInput);
   elements.casinoBetInput.addEventListener('change', handleCasinoStakeCommit);
   elements.casinoPlayButton.addEventListener('click', handleCasinoPlay);
@@ -117,12 +115,6 @@ function handleCasinoStakeCommit() {
   state.casino.stake = clampCasinoStake(state.casino.stake);
   saveCasinoState();
   renderCasinoControls();
-}
-
-function handleCasinoCurrencyChange(event) {
-  state.casino.currencyMode = event.target.value === 'budget' ? 'budget' : 'credits';
-  saveCasinoState();
-  renderCasino();
 }
 
 function handleRouletteChoiceChange() {
@@ -637,8 +629,7 @@ function renderCasinoControls() {
   const gameMeta = getCasinoGameMeta(state.casino.game);
 
   elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
-  elements.casinoCredits.textContent = formatCasinoAmount(state.casino.credits, { compact: true });
-  elements.casinoCurrencySelect.value = state.casino.currencyMode;
+  elements.casinoCredits.textContent = formatCasinoAmount(state.casino.credits);
   elements.casinoPlayButton.textContent = gameMeta.action;
   elements.casinoPlayButton.disabled = creditsEmpty;
   elements.casinoResetButton.hidden = !creditsEmpty;
@@ -652,7 +643,7 @@ function renderCasinoControls() {
   elements.casinoRoundStatus.textContent = creditsEmpty ? 'Demo balance empty' : state.casino.status;
 
   elements.casinoBetHint.textContent = creditsEmpty
-    ? `Saldo ${getCasinoBalanceLabel()} wynosi 0. Możesz zresetować wyłącznie fikcyjne demo balance.`
+    ? `Saldo PLN wynosi 0. Możesz zresetować wyłącznie fikcyjne saldo symulacji.`
     : `Limit rundy: ${formatCasinoAmount(minStake)}-${formatCasinoAmount(maxStake)}. Budżet domowy pozostaje odseparowany.`;
 
   elements.casinoGameTabs.forEach(button => {
@@ -663,7 +654,7 @@ function renderCasinoControls() {
   elements.casinoChipButtons.forEach(button => {
     const value = Number(button.dataset.betChip);
     button.disabled = creditsEmpty || value > maxStake || value < minStake;
-    button.textContent = formatCasinoAmount(value, { compact: true });
+    button.textContent = formatCasinoAmount(value);
   });
 }
 
@@ -709,7 +700,7 @@ function renderCasinoHistory() {
 
     const delta = document.createElement('div');
     delta.className = `casino-history-delta ${entry.delta > 0 ? 'win' : entry.delta < 0 ? 'loss' : 'neutral'}`;
-    delta.textContent = `${entry.delta > 0 ? '+' : ''}${formatCasinoAmount(entry.delta, { compact: true })}`;
+    delta.textContent = `${entry.delta > 0 ? '+' : ''}${formatCasinoAmount(entry.delta)}`;
 
     meta.append(title, detail);
     item.append(meta, delta);
@@ -1319,7 +1310,6 @@ function saveCasinoState() {
       credits: state.casino.credits,
       game: state.casino.game,
       stake: state.casino.stake,
-      currencyMode: state.casino.currencyMode,
       history: state.casino.history
     }));
   } catch {
@@ -1339,7 +1329,6 @@ function loadCasinoState() {
       credits: normalizeCasinoCredits(saved.credits),
       game: ['blackjack', 'roulette', 'slots'].includes(saved.game) ? saved.game : 'blackjack',
       stake: Number.isFinite(Number(saved.stake)) ? Number(saved.stake) : 50,
-      currencyMode: saved.currencyMode === 'budget' ? 'budget' : 'credits',
       status: 'Ready',
       lastRound: null,
       history: Array.isArray(saved.history)
@@ -1356,7 +1345,6 @@ function createDefaultCasinoState() {
     credits: casinoInitialCredits,
     game: 'blackjack',
     stake: 50,
-    currencyMode: 'credits',
     status: 'Ready',
     lastRound: null,
     history: []
@@ -1451,24 +1439,12 @@ function formatCurrency(value) {
   }).format(value);
 }
 
-function formatDemoCredits(value) {
-  return new Intl.NumberFormat('pl-PL', {
-    maximumFractionDigits: 0
-  }).format(value);
-}
-
-function formatCasinoAmount(value, options = {}) {
-  if (state.casino.currencyMode === 'budget') {
-    const amount = formatCurrency(value);
-    return options.compact ? amount : `${amount} demo`;
-  }
-
-  const amount = formatDemoCredits(value);
-  return options.compact ? amount : `${amount} demo credits`;
+function formatCasinoAmount(value) {
+  return formatCurrency(value);
 }
 
 function getCasinoBalanceLabel() {
-  return state.casino.currencyMode === 'budget' ? 'PLN demo' : 'Demo credits';
+  return 'PLN';
 }
 
 function formatDate(value) {

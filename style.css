@@ -947,7 +947,6 @@ select:focus {
 }
 
 .casino-bet-panel,
-.casino-currency-panel,
 .roulette-choice-panel {
   display: grid;
   gap: 12px;

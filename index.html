@@ -157,9 +157,9 @@
             <p>Ten moduł jest fikcyjną symulacją interfejsu i nie korzysta z prawdziwych pieniędzy.</p>
           </div>
 
-          <aside class="casino-balance-card" aria-label="Saldo demo credits">
-            <span id="casinoBalanceLabel">Demo credits</span>
-            <strong id="casinoCredits">1000</strong>
+          <aside class="casino-balance-card" aria-label="Saldo PLN w symulacji">
+            <span id="casinoBalanceLabel">PLN</span>
+            <strong id="casinoCredits">1000,00 zł</strong>
             <small>Odseparowane od budżetu domowego</small>
           </aside>
         </header>
@@ -174,29 +174,18 @@
 
             <div class="casino-bet-panel">
               <label class="casino-field">
-                <span>Demo stake</span>
+                <span>Stawka PLN</span>
                 <input type="number" id="casinoBetInput" min="10" step="5" value="50" aria-describedby="casinoBetHint">
               </label>
 
-              <div class="casino-chip-row" aria-label="Szybki wybór demo stake">
-                <button type="button" data-bet-chip="25">25</button>
-                <button type="button" data-bet-chip="50">50</button>
-                <button type="button" data-bet-chip="100">100</button>
-                <button type="button" data-bet-chip="200">200</button>
+              <div class="casino-chip-row" aria-label="Szybki wybór stawki PLN">
+                <button type="button" data-bet-chip="25">25,00 zł</button>
+                <button type="button" data-bet-chip="50">50,00 zł</button>
+                <button type="button" data-bet-chip="100">100,00 zł</button>
+                <button type="button" data-bet-chip="200">200,00 zł</button>
               </div>
 
-              <p class="casino-bet-hint" id="casinoBetHint">Maksymalny demo stake jest limitowany i nigdy nie korzysta z budżetu domowego.</p>
-            </div>
-
-            <div class="casino-currency-panel">
-              <label class="casino-field">
-                <span>Format salda</span>
-                <select id="casinoCurrencySelect" aria-label="Format salda casino simulation">
-                  <option value="credits">Demo credits</option>
-                  <option value="budget">PLN demo jak w budżecie</option>
-                </select>
-              </label>
-              <p class="casino-bet-hint">Zmienia tylko sposób wyświetlania fikcyjnego salda. Nie łączy symulatora z budżetem domowym.</p>
+              <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana i nigdy nie korzysta z budżetu domowego.</p>
             </div>
 
             <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
@@ -218,15 +207,15 @@
             </div>
 
             <button type="button" class="casino-play-button" id="casinoPlayButton">Deal demo round</button>
-            <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Reset demo balance</button>
+            <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Resetuj saldo PLN</button>
 
-            <p class="casino-safety-note">Fictional credits i PLN demo nie mają wartości pieniężnej. Brak długu, brak real money flow, brak połączenia z przychodami lub wydatkami.</p>
+            <p class="casino-safety-note">PLN w tej sekcji jest wyłącznie fikcyjną wartością symulacji. Brak długu, brak real money flow, brak połączenia z przychodami lub wydatkami.</p>
           </aside>
 
           <section class="casino-stage-card" aria-live="polite">
             <div class="jackpot-banner" id="casinoJackpotBanner" hidden>
               <span>Symbolic jackpot event</span>
-              <strong>Rzadki bonus demo credits</strong>
+              <strong>Rzadki bonus PLN</strong>
             </div>
 
             <div class="casino-stage-heading">
