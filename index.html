@@ -17,25 +17,40 @@
     <div>Bilans: <span id="balance">0 zł</span></div>
   </div>
 
-  <form id="budgetForm">
-    <input type="text" id="description" placeholder="Opis" required>
-    <input type="number" id="amount" placeholder="Kwota" required>
+  <div class="forms">
+    <form id="incomeForm" class="budget-form income-form">
+      <h2>Przychód</h2>
 
-    <select id="type">
-      <option value="income">Przychód</option>
-      <option value="expense">Wydatek</option>
-    </select>
+      <input type="text" name="description" placeholder="Opis przychodu" required>
+      <input type="number" name="amount" placeholder="Kwota przychodu" min="0.01" step="0.01" required>
 
-    <select id="category">
-      <option>Jedzenie</option>
-      <option>Mieszkanie</option>
-      <option>Transport</option>
-      <option>Rozrywka</option>
-      <option>Inne</option>
-    </select>
+      <select name="category">
+        <option>Wynagrodzenie</option>
+        <option>Premia</option>
+        <option>Sprzedaż</option>
+        <option>Inne</option>
+      </select>
 
-    <button type="submit">Dodaj</button>
-  </form>
+      <button type="submit">Dodaj przychód</button>
+    </form>
+
+    <form id="expenseForm" class="budget-form expense-form">
+      <h2>Wydatek</h2>
+
+      <input type="text" name="description" placeholder="Opis wydatku" required>
+      <input type="number" name="amount" placeholder="Kwota wydatku" min="0.01" step="0.01" required>
+
+      <select name="category">
+        <option>Jedzenie</option>
+        <option>Mieszkanie</option>
+        <option>Transport</option>
+        <option>Rozrywka</option>
+        <option>Inne</option>
+      </select>
+
+      <button type="submit">Dodaj wydatek</button>
+    </form>
+  </div>
 
   <div id="transactions"></div>
 </div>

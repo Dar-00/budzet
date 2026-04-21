@@ -1,15 +1,27 @@
-const form = document.getElementById('budgetForm');
+const incomeForm = document.getElementById('incomeForm');
+const expenseForm = document.getElementById('expenseForm');
 const transactionsDiv = document.getElementById('transactions');
 
 let transactions = [];
 
-form.addEventListener('submit', function(e) {
+incomeForm.addEventListener('submit', function(e) {
   e.preventDefault();
+  addTransaction(e.currentTarget, 'income');
+});
 
-  const description = document.getElementById('description').value;
-  const amount = parseFloat(document.getElementById('amount').value);
-  const type = document.getElementById('type').value;
-  const category = document.getElementById('category').value;
+expenseForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  addTransaction(e.currentTarget, 'expense');
+});
+
+function addTransaction(form, type) {
+  const description = form.elements.description.value.trim();
+  const amount = parseFloat(form.elements.amount.value);
+  const category = form.elements.category.value;
+
+  if (!description || Number.isNaN(amount) || amount <= 0) {
+    return;
+  }
 
   transactions.push({
     description,
@@ -20,7 +32,7 @@ form.addEventListener('submit', function(e) {
 
   form.reset();
   renderTransactions();
-});
+}
 
 function renderTransactions() {
   transactionsDiv.innerHTML = '';
