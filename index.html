@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budżet domowy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Budżet domowy</h1>
+
+  <div class="summary">
+    <div>Przychody: <span id="income">0 zł</span></div>
+    <div>Wydatki: <span id="expenses">0 zł</span></div>
+    <div>Bilans: <span id="balance">0 zł</span></div>
+  </div>
+
+  <form id="budgetForm">
+    <input type="text" id="description" placeholder="Opis" required>
+    <input type="number" id="amount" placeholder="Kwota" required>
+
+    <select id="type">
+      <option value="income">Przychód</option>
+      <option value="expense">Wydatek</option>
+    </select>
+
+    <select id="category">
+      <option>Jedzenie</option>
+      <option>Mieszkanie</option>
+      <option>Transport</option>
+      <option>Rozrywka</option>
+      <option>Inne</option>
+    </select>
+
+    <button type="submit">Dodaj</button>
+  </form>
+
+  <div id="transactions"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
