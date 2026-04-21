@@ -77,8 +77,50 @@ body {
   .transaction {
     display: flex;
     justify-content: space-between;
+    gap: 12px;
+    align-items: center;
     padding: 10px;
     border-bottom: 1px solid #ddd;
+  }
+
+  .transaction-income {
+    border-left: 4px solid #16a34a;
+  }
+
+  .transaction-expense {
+    border-left: 4px solid #dc2626;
+  }
+
+  .transaction-info {
+    display: grid;
+    gap: 4px;
+  }
+
+  .transaction-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .transaction-actions button,
+  .edit-form button {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .delete-button {
+    background: #dc2626;
+  }
+
+  .edit-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto auto;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .edit-form button[type="button"] {
+    background: #64748b;
   }
 
   @media (max-width: 650px) {
@@ -88,6 +130,22 @@ body {
     }
 
     .forms {
+      grid-template-columns: 1fr;
+    }
+
+    .transaction {
+      display: grid;
+    }
+
+    .transaction-actions {
+      width: 100%;
+    }
+
+    .transaction-actions button {
+      flex: 1;
+    }
+
+    .edit-form {
       grid-template-columns: 1fr;
     }
   }
