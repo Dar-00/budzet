@@ -159,8 +159,8 @@
 
           <aside class="casino-balance-card" aria-label="Saldo PLN w symulacji">
             <span id="casinoBalanceLabel">PLN</span>
-            <strong id="casinoCredits">1000,00 zł</strong>
-            <small>Odseparowane od budżetu domowego</small>
+            <strong id="casinoCredits">0,00 zł</strong>
+            <small>Zsynchronizowane z bilansem miesiąca</small>
           </aside>
         </header>
 
@@ -185,7 +185,7 @@
                 <button type="button" data-bet-chip="200">200,00 zł</button>
               </div>
 
-              <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana i nigdy nie korzysta z budżetu domowego.</p>
+              <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana względem bieżącego bilansu miesiąca.</p>
             </div>
 
             <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
@@ -206,10 +206,10 @@
               </div>
             </div>
 
-            <button type="button" class="casino-play-button" id="casinoPlayButton">Deal demo round</button>
-            <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Resetuj saldo PLN</button>
+            <button type="button" class="casino-play-button" id="casinoPlayButton">Deal round</button>
+            <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Wyczyść wyniki symulacji</button>
 
-            <p class="casino-safety-note">PLN w tej sekcji jest wyłącznie fikcyjną wartością symulacji. Brak długu, brak real money flow, brak połączenia z przychodami lub wydatkami.</p>
+            <p class="casino-safety-note">PLN w tej sekcji synchronizuje się z bilansem miesiąca w aplikacji. To nadal fikcyjna symulacja interfejsu bez długu i bez real money flow.</p>
           </aside>
 
           <section class="casino-stage-card" aria-live="polite">
@@ -227,7 +227,7 @@
             </div>
 
             <div class="casino-stage" id="casinoStage"></div>
-            <div class="casino-result" id="casinoResult">Wybierz demo stake i uruchom fikcyjną rundę.</div>
+            <div class="casino-result" id="casinoResult">Wybierz stawkę PLN i uruchom fikcyjną rundę.</div>
           </section>
         </div>
 

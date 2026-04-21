@@ -1,14 +1,15 @@
 const storageKey = 'premium-budget-transactions';
 const themeStorageKey = 'premium-budget-theme';
 const casinoStorageKey = 'premium-budget-casino-demo';
-const casinoInitialCredits = 1000;
 const casinoHistoryLimit = 6;
 const casinoMaxStake = 200;
 const casinoMaxStakeRatio = 0.25;
+const casinoCategory = 'Symulacja casino';
+const casinoTransactionSource = 'casino-simulation';
 
 const categories = {
-  income: ['Wynagrodzenie', 'Premia', 'Zwrot', 'Inwestycje', 'Inne'],
-  expense: ['Jedzenie', 'Mieszkanie', 'Transport', 'Zdrowie', 'Rozrywka', 'Subskrypcje', 'Inne']
+  income: ['Wynagrodzenie', 'Premia', 'Zwrot', 'Inwestycje', casinoCategory, 'Inne'],
+  expense: ['Jedzenie', 'Mieszkanie', 'Transport', 'Zdrowie', 'Rozrywka', 'Subskrypcje', casinoCategory, 'Inne']
 };
 
 const elements = {
@@ -123,7 +124,9 @@ function handleRouletteChoiceChange() {
 }
 
 function handleCasinoPlay() {
-  if (state.casino.credits <= 0) {
+  const availableBalance = getCasinoAvailableBalance();
+
+  if (availableBalance <= 0) {
     renderCasino();
     return;
   }
@@ -136,29 +139,31 @@ function handleCasinoPlay() {
   }
 
   const round = playCasinoRound(state.casino.game, stake);
-  const nextCredits = Math.max(0, state.casino.credits + round.delta);
+  const nextBalance = Math.max(0, availableBalance + round.delta);
 
-  state.casino.credits = nextCredits;
   state.casino.stake = clampCasinoStake(stake);
   state.casino.lastRound = round;
   state.casino.status = round.label;
   state.casino.history = [
-    createCasinoHistoryEntry(round, nextCredits),
+    createCasinoHistoryEntry(round, nextBalance),
     ...state.casino.history
   ].slice(0, casinoHistoryLimit);
 
+  addCasinoTransaction(round);
+  saveTransactions();
   saveCasinoState();
-  renderCasino();
+  render();
 }
 
 function handleCasinoReset() {
-  state.casino.credits = casinoInitialCredits;
   state.casino.stake = 50;
   state.casino.history = [];
   state.casino.lastRound = null;
   state.casino.status = 'Ready';
+  state.transactions = state.transactions.filter(transaction => transaction.source !== casinoTransactionSource);
+  saveTransactions();
   saveCasinoState();
-  renderCasino();
+  render();
 }
 
 function handleCreateFormChange(event) {
@@ -310,6 +315,7 @@ function render() {
 
   renderAnalytics(monthTransactions);
   renderTransactions();
+  renderCasino();
 }
 
 function renderTransactions() {
@@ -556,6 +562,11 @@ function getCurrentMonthTransactions() {
   });
 }
 
+function getCurrentMonthBalance() {
+  const monthTransactions = getCurrentMonthTransactions();
+  return sumByType(monthTransactions, 'income') - sumByType(monthTransactions, 'expense');
+}
+
 function getTopExpenseCategory(transactions) {
   const totals = transactions
     .filter(transaction => transaction.type === 'expense')
@@ -625,26 +636,29 @@ function renderCasino() {
 function renderCasinoControls() {
   const minStake = getCasinoMinStake();
   const maxStake = getCasinoMaxStake();
-  const creditsEmpty = state.casino.credits <= 0;
+  const availableBalance = getCasinoAvailableBalance();
+  const balanceEmpty = availableBalance <= 0;
+  const hasCasinoTransactions = state.transactions.some(transaction => transaction.source === casinoTransactionSource);
   const gameMeta = getCasinoGameMeta(state.casino.game);
 
+  state.casino.stake = balanceEmpty ? 0 : clampCasinoStake(state.casino.stake);
   elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
-  elements.casinoCredits.textContent = formatCasinoAmount(state.casino.credits);
+  elements.casinoCredits.textContent = formatCasinoAmount(availableBalance);
   elements.casinoPlayButton.textContent = gameMeta.action;
-  elements.casinoPlayButton.disabled = creditsEmpty;
-  elements.casinoResetButton.hidden = !creditsEmpty;
+  elements.casinoPlayButton.disabled = balanceEmpty;
+  elements.casinoResetButton.hidden = !hasCasinoTransactions && state.casino.history.length === 0;
   elements.rouletteChoicePanel.hidden = state.casino.game !== 'roulette';
-  elements.casinoBetInput.disabled = creditsEmpty;
+  elements.casinoBetInput.disabled = balanceEmpty;
   elements.casinoBetInput.min = String(minStake);
   elements.casinoBetInput.max = String(maxStake);
   elements.casinoBetInput.value = String(state.casino.stake);
   elements.casinoModeLabel.textContent = gameMeta.label;
   elements.casinoGameTitle.textContent = gameMeta.label;
-  elements.casinoRoundStatus.textContent = creditsEmpty ? 'Demo balance empty' : state.casino.status;
+  elements.casinoRoundStatus.textContent = balanceEmpty ? 'Brak dostępnego bilansu' : state.casino.status;
 
-  elements.casinoBetHint.textContent = creditsEmpty
-    ? `Saldo PLN wynosi 0. Możesz zresetować wyłącznie fikcyjne saldo symulacji.`
-    : `Limit rundy: ${formatCasinoAmount(minStake)}-${formatCasinoAmount(maxStake)}. Budżet domowy pozostaje odseparowany.`;
+  elements.casinoBetHint.textContent = balanceEmpty
+    ? `Bilans miesiąca wynosi ${formatCasinoAmount(availableBalance)}. Dodaj przychód lub usuń wydatki, aby uruchomić symulację.`
+    : `Limit rundy: ${formatCasinoAmount(minStake)}-${formatCasinoAmount(maxStake)}. Saldo casino synchronizuje się z bilansem miesiąca.`;
 
   elements.casinoGameTabs.forEach(button => {
     const isActive = button.dataset.casinoGame === state.casino.game;
@@ -653,7 +667,7 @@ function renderCasinoControls() {
 
   elements.casinoChipButtons.forEach(button => {
     const value = Number(button.dataset.betChip);
-    button.disabled = creditsEmpty || value > maxStake || value < minStake;
+    button.disabled = balanceEmpty || value > maxStake || value < minStake;
     button.textContent = formatCasinoAmount(value);
   });
 }
@@ -668,7 +682,7 @@ function renderCasinoStage() {
   elements.casinoResult.className = `casino-result ${currentRound ? getCasinoResultClass(currentRound.type) : ''}`.trim();
   elements.casinoResult.textContent = currentRound
     ? currentRound.message
-    : 'Wybierz demo stake i uruchom fikcyjną rundę.';
+    : 'Wybierz stawkę PLN i uruchom fikcyjną rundę.';
 }
 
 function renderCasinoHistory() {
@@ -681,7 +695,7 @@ function renderCasinoHistory() {
   );
 
   if (state.casino.history.length === 0) {
-    elements.casinoHistory.appendChild(createCasinoEmptyState('Historia pokaże tylko wyniki fikcyjnych rund demo.'));
+    elements.casinoHistory.appendChild(createCasinoEmptyState('Historia pokaże tylko wyniki fikcyjnych rund symulacji.'));
     return;
   }
 
@@ -696,7 +710,7 @@ function renderCasinoHistory() {
     title.textContent = `${entry.gameName} · ${entry.label}`;
 
     const detail = document.createElement('span');
-    detail.textContent = `${entry.detail} · saldo: ${formatCasinoAmount(entry.creditsAfter)}`;
+    detail.textContent = `${entry.detail} · saldo: ${formatCasinoAmount(entry.balanceAfter)}`;
 
     const delta = document.createElement('div');
     delta.className = `casino-history-delta ${entry.delta > 0 ? 'win' : entry.delta < 0 ? 'loss' : 'neutral'}`;
@@ -728,7 +742,7 @@ function createBlackjackView(round) {
   const hands = document.createElement('div');
   hands.className = 'blackjack-hands';
   hands.append(
-    createBlackjackHand('Demo player', visual.playerCards, visual.playerTotal),
+    createBlackjackHand('Player UI', visual.playerCards, visual.playerTotal),
     createBlackjackHand('Dealer UI', visual.dealerCards, visual.dealerTotal)
   );
 
@@ -782,7 +796,7 @@ function createRouletteView(round) {
 
   const summary = document.createElement('div');
   summary.className = 'roulette-summary';
-  summary.textContent = round ? `Result: ${visual.color}` : 'Fictional roulette interface preview';
+  summary.textContent = round ? `Result: ${visual.color}` : 'Symulacyjny podgląd ruletki';
 
   wheel.append(ball, outcome);
   table.append(label, wheel, summary);
@@ -810,7 +824,7 @@ function createSlotsView(round) {
 
   const summary = document.createElement('div');
   summary.className = 'slot-summary';
-  summary.textContent = round ? visual.pattern : 'Three demo reels, fictional credits only';
+  summary.textContent = round ? visual.pattern : 'Trzy rolki fikcyjnej symulacji PLN';
 
   table.append(label, reels, summary);
   return table;
@@ -847,7 +861,7 @@ function playBlackjackRound(stake) {
       label: 'Jackpot event',
       delta,
       stake,
-      detail: 'Blackjack demo hand',
+      detail: 'Blackjack simulation hand',
       message: `Symboliczny jackpot event: +${formatCasinoAmount(delta)}. To nadal fikcyjna symulacja UI.`,
       visual
     });
@@ -862,7 +876,7 @@ function playBlackjackRound(stake) {
       label: 'Bonus win',
       delta,
       stake,
-      detail: 'Clean 21 in demo hand',
+      detail: 'Clean 21 in simulation hand',
       message: `Bonus win: +${formatCasinoAmount(delta)} za demonstracyjną rękę 21.`,
       visual
     });
@@ -1042,16 +1056,33 @@ function createCasinoRound(round) {
   };
 }
 
-function createCasinoHistoryEntry(round, creditsAfter) {
+function createCasinoHistoryEntry(round, balanceAfter) {
   return {
     id: round.id,
     gameName: round.gameName,
     label: round.label,
     detail: round.detail,
     delta: round.delta,
-    creditsAfter,
+    balanceAfter,
     createdAt: round.createdAt
   };
+}
+
+function addCasinoTransaction(round) {
+  if (round.delta === 0) {
+    return;
+  }
+
+  state.transactions.push({
+    id: createId(),
+    createdAt: new Date().toISOString(),
+    description: `${round.gameName}: ${round.label}`,
+    amount: Math.abs(round.delta),
+    type: round.delta > 0 ? 'income' : 'expense',
+    category: casinoCategory,
+    date: toDateInputValue(new Date()),
+    source: casinoTransactionSource
+  });
 }
 
 function createBlackjackPreview() {
@@ -1176,15 +1207,15 @@ function getCasinoGameMeta(game) {
   const games = {
     blackjack: {
       label: 'Blackjack Simulation',
-      action: 'Deal demo round'
+      action: 'Deal round'
     },
     roulette: {
       label: 'Roulette Simulation',
-      action: 'Spin demo wheel'
+      action: 'Spin wheel'
     },
     slots: {
       label: 'Slot Machine Simulation',
-      action: 'Spin demo reels'
+      action: 'Spin reels'
     }
   };
 
@@ -1208,12 +1239,18 @@ function getSelectedRouletteColor() {
   return selected ? selected.value : 'red';
 }
 
+function getCasinoAvailableBalance() {
+  return Math.max(0, getCurrentMonthBalance());
+}
+
 function getCasinoMaxStake() {
-  if (state.casino.credits <= 0) {
+  const availableBalance = getCasinoAvailableBalance();
+
+  if (availableBalance <= 0) {
     return 0;
   }
 
-  return Math.max(1, Math.min(casinoMaxStake, Math.floor(state.casino.credits * casinoMaxStakeRatio)));
+  return Math.max(1, Math.min(casinoMaxStake, Math.floor(availableBalance * casinoMaxStakeRatio)));
 }
 
 function getCasinoMinStake() {
@@ -1307,7 +1344,6 @@ function loadTheme() {
 function saveCasinoState() {
   try {
     localStorage.setItem(casinoStorageKey, JSON.stringify({
-      credits: state.casino.credits,
       game: state.casino.game,
       stake: state.casino.stake,
       history: state.casino.history
@@ -1326,7 +1362,6 @@ function loadCasinoState() {
     }
 
     return {
-      credits: normalizeCasinoCredits(saved.credits),
       game: ['blackjack', 'roulette', 'slots'].includes(saved.game) ? saved.game : 'blackjack',
       stake: Number.isFinite(Number(saved.stake)) ? Number(saved.stake) : 50,
       status: 'Ready',
@@ -1342,23 +1377,12 @@ function loadCasinoState() {
 
 function createDefaultCasinoState() {
   return {
-    credits: casinoInitialCredits,
     game: 'blackjack',
     stake: 50,
     status: 'Ready',
     lastRound: null,
     history: []
   };
-}
-
-function normalizeCasinoCredits(value) {
-  const credits = Math.floor(Number(value));
-
-  if (!Number.isFinite(credits) || credits < 0) {
-    return casinoInitialCredits;
-  }
-
-  return credits;
 }
 
 function normalizeCasinoHistoryEntry(entry) {
@@ -1369,10 +1393,10 @@ function normalizeCasinoHistoryEntry(entry) {
   return {
     id: String(entry.id || createId()),
     gameName: String(entry.gameName || 'Casino Simulation'),
-    label: String(entry.label || 'Demo round'),
+    label: String(entry.label || 'Simulation round'),
     detail: String(entry.detail || 'Fictional result'),
     delta: Math.trunc(Number(entry.delta) || 0),
-    creditsAfter: normalizeCasinoCredits(entry.creditsAfter),
+    balanceAfter: Math.max(0, Number(entry.balanceAfter) || 0),
     createdAt: entry.createdAt || new Date().toISOString()
   };
 }
@@ -1419,7 +1443,8 @@ function normalizeTransaction(transaction) {
     amount,
     type,
     category,
-    date: transaction.date || toDateInputValue(new Date())
+    date: transaction.date || toDateInputValue(new Date()),
+    source: transaction.source === casinoTransactionSource ? casinoTransactionSource : undefined
   };
 }
 
