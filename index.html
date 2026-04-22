@@ -181,48 +181,13 @@
           </header>
 
           <div class="casino-grid">
-            <aside class="casino-control-card" aria-label="Sterowanie symulacją">
+            <aside class="casino-control-card" aria-label="Wybór gry w symulacji">
+              <p class="casino-kicker">Tryb gry</p>
               <div class="casino-game-tabs" role="group" aria-label="Wybór gry demonstracyjnej">
                 <button type="button" class="casino-game-tab is-active" data-casino-game="blackjack">Blackjack</button>
                 <button type="button" class="casino-game-tab" data-casino-game="roulette">Roulette</button>
                 <button type="button" class="casino-game-tab" data-casino-game="slots">Slots</button>
               </div>
-
-              <div class="casino-bet-panel">
-                <label class="casino-field">
-                  <span>Stawka PLN</span>
-                  <input type="number" id="casinoBetInput" min="10" step="0.01" value="50" placeholder="Wpisz własną kwotę" aria-describedby="casinoBetHint">
-                </label>
-
-                <div class="casino-chip-row" aria-label="Szybki wybór stawki PLN">
-                  <button type="button" data-bet-chip="25">25,00 zł</button>
-                  <button type="button" data-bet-chip="50">50,00 zł</button>
-                  <button type="button" data-bet-chip="100">100,00 zł</button>
-                  <button type="button" data-bet-chip="200">200,00 zł</button>
-                </div>
-
-                <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana względem bieżącego bilansu miesiąca.</p>
-              </div>
-
-              <div class="blackjack-action-panel" id="blackjackActionPanel">
-                <button type="button" id="blackjackDealButton">Deal / New Round</button>
-                <button type="button" id="blackjackHitButton">Hit</button>
-                <button type="button" id="blackjackStandButton">Stand</button>
-              </div>
-
-              <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
-                <span>Aktualne wybory</span>
-                <div class="roulette-color-row" aria-label="Wybór koloru w ruletce">
-                  <button type="button" class="roulette-color-button red" data-roulette-color="red">Czerwone</button>
-                  <button type="button" class="roulette-color-button black" data-roulette-color="black">Czarne</button>
-                  <button type="button" class="roulette-color-button green" data-roulette-color="green">Zielone</button>
-                </div>
-                <div class="roulette-picks-summary" id="roulettePicksSummary">Brak wyborów</div>
-                <button type="button" class="roulette-clear-button" id="rouletteClearButton">Wyczyść wybory</button>
-              </div>
-
-              <button type="button" class="casino-play-button" id="casinoPlayButton">Spin wheel</button>
-              <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Wyczyść wyniki symulacji</button>
 
               <p class="casino-safety-note">PLN w tej sekcji synchronizuje się z bilansem miesiąca w aplikacji. To nadal fikcyjna symulacja interfejsu bez długu i bez real money flow.</p>
             </aside>
@@ -239,6 +204,44 @@
                   <h3 id="casinoGameTitle">Blackjack Simulation</h3>
                 </div>
                 <span class="casino-round-status" id="casinoRoundStatus">Ready</span>
+              </div>
+
+              <div class="casino-playdesk" aria-label="Stawka i akcje gry">
+                <div class="casino-bet-panel">
+                  <label class="casino-field">
+                    <span>Stawka PLN</span>
+                    <input type="number" id="casinoBetInput" min="10" step="0.01" value="50" placeholder="Wpisz własną kwotę" aria-describedby="casinoBetHint">
+                  </label>
+
+                  <div class="casino-chip-row" aria-label="Szybki wybór stawki PLN">
+                    <button type="button" data-bet-chip="25">25,00 zł</button>
+                    <button type="button" data-bet-chip="50">50,00 zł</button>
+                    <button type="button" data-bet-chip="100">100,00 zł</button>
+                    <button type="button" data-bet-chip="200">200,00 zł</button>
+                  </div>
+
+                  <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana względem bieżącego bilansu miesiąca.</p>
+                </div>
+
+                <div class="blackjack-action-panel" id="blackjackActionPanel">
+                  <button type="button" id="blackjackDealButton">Deal / New Round</button>
+                  <button type="button" id="blackjackHitButton">Hit</button>
+                  <button type="button" id="blackjackStandButton">Stand</button>
+                </div>
+
+                <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
+                  <span>Aktualne wybory</span>
+                  <div class="roulette-color-row" aria-label="Wybór koloru w ruletce">
+                    <button type="button" class="roulette-color-button red" data-roulette-color="red">Czerwone</button>
+                    <button type="button" class="roulette-color-button black" data-roulette-color="black">Czarne</button>
+                    <button type="button" class="roulette-color-button green" data-roulette-color="green">Zielone</button>
+                  </div>
+                  <div class="roulette-picks-summary" id="roulettePicksSummary">Brak wyborów</div>
+                  <button type="button" class="roulette-clear-button" id="rouletteClearButton">Wyczyść wybory</button>
+                </div>
+
+                <button type="button" class="casino-play-button" id="casinoPlayButton">Spin wheel</button>
+                <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Wyczyść wyniki symulacji</button>
               </div>
 
               <div class="casino-stage" id="casinoStage"></div>

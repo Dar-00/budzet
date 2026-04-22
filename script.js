@@ -670,6 +670,13 @@ function handleCasinoStageClick(event) {
     return;
   }
 
+  const spinButton = event.target.closest('[data-roulette-spin]');
+
+  if (spinButton) {
+    handleRouletteSpin();
+    return;
+  }
+
   const button = event.target.closest('[data-roulette-number]');
 
   if (!button) {
@@ -1278,7 +1285,7 @@ function renderCasinoControls() {
   elements.casinoCredits.textContent = formatCasinoAmount(availableBalance);
   elements.casinoMiniBalance.textContent = formatCasinoAmount(availableBalance);
   elements.casinoPlayButton.textContent = gameMeta.action;
-  elements.casinoPlayButton.hidden = isBlackjack;
+  elements.casinoPlayButton.hidden = isBlackjack || isRoulette;
   elements.casinoPlayButton.disabled = balanceEmpty || stakeInvalid || (isRoulette && !state.roulette.canSpin()) || (!isSlots && !isRoulette);
   elements.casinoResetButton.hidden = !hasCasinoTransactions && state.casino.history.length === 0;
   elements.blackjackActionPanel.hidden = !isBlackjack;
@@ -1489,7 +1496,6 @@ function createBlackjackResultPanel(visual) {
 
 function createRouletteView(round) {
   const result = state.roulette.result;
-  const selected = [...state.roulette.selectedNumbers].sort((first, second) => first - second);
   const visual = round
     ? {
         ...round.visual,
@@ -1498,19 +1504,29 @@ function createRouletteView(round) {
     : {
         color: result ? result.color : 'black',
         number: result ? String(result.number) : '--',
-        selected,
         spinning: state.roulette.phase === 'spin'
       };
   const winningNumber = result ? result.number : round ? Number(round.visual.number) : null;
   const table = document.createElement('div');
   table.className = 'roulette-table';
 
-  const wheelPanel = document.createElement('div');
-  wheelPanel.className = 'roulette-wheel-panel';
+  table.append(createRouletteWheelPanel(visual, Boolean(round || result)), createRouletteBoard(winningNumber), createRouletteResultPanel(round));
+  return table;
+}
+
+function createRouletteWheelPanel(visual, hasResult) {
+  const panel = document.createElement('div');
+  panel.className = 'roulette-wheel-panel';
 
   const label = document.createElement('span');
   label.className = 'roulette-label';
   label.textContent = state.roulette.getStatusMessage();
+
+  const wheelFrame = document.createElement('div');
+  wheelFrame.className = 'roulette-wheel-frame';
+
+  const pointer = document.createElement('div');
+  pointer.className = 'roulette-pointer';
 
   const wheel = document.createElement('div');
   wheel.className = `roulette-wheel ${visual.spinning ? 'is-spinning' : ''}`;
@@ -1524,17 +1540,18 @@ function createRouletteView(round) {
 
   const summary = document.createElement('div');
   summary.className = 'roulette-summary';
-  summary.textContent = round || result
-    ? `Winning field: ${visual.number} · ${visual.color}`
-    : 'Toggle numbered cells before spinning.';
+  summary.textContent = hasResult
+    ? `Wynik: ${visual.number} · ${getRouletteColorLabel(visual.color)}`
+    : 'Wybierz numer lub kolor, a następnie zakręć kołem.';
 
   wheel.append(ball, outcome);
-  wheelPanel.append(label, wheel, summary, createRouletteRecentResults());
-  table.append(wheelPanel, createRouletteBoard(selected, winningNumber), createRouletteResultPanel(round));
-  return table;
+  wheelFrame.append(pointer, wheel);
+  panel.append(label, wheelFrame, summary, createRouletteRecentResults());
+  return panel;
 }
 
-function createRouletteBoard(selected, winningNumber) {
+function createRouletteBoard(winningNumber) {
+  const selectedCount = state.roulette.selectedNumbers.size + state.roulette.selectedColors.size;
   const panel = document.createElement('div');
   panel.className = 'roulette-board-panel';
 
@@ -1542,10 +1559,10 @@ function createRouletteBoard(selected, winningNumber) {
   title.className = 'roulette-board-title';
 
   const label = document.createElement('span');
-  label.textContent = 'Number board';
+  label.textContent = 'Tablica numerów';
 
   const count = document.createElement('strong');
-  count.textContent = `${selected.length} selected`;
+  count.textContent = formatCount(selectedCount, 'wybrany', 'wybrane', 'wybranych');
 
   const grid = document.createElement('div');
   grid.className = 'roulette-number-grid';
@@ -1572,24 +1589,39 @@ function createRouletteResultPanel(round) {
   const panel = document.createElement('div');
   panel.className = 'roulette-result-panel';
 
+  const content = document.createElement('div');
+  content.className = 'roulette-status-copy';
+
+  const badge = document.createElement('span');
+  badge.className = 'roulette-status-badge';
+  badge.textContent = state.roulette.phase === 'spin' ? 'SPIN' : state.roulette.phase === 'reveal' ? 'WIN' : 'LIVE';
+
   const title = document.createElement('strong');
   const description = document.createElement('p');
 
   if (round) {
-    title.textContent = round.label;
+    title.textContent = round.delta > 0 ? 'Wynik rundy' : round.delta < 0 ? 'Runda zakończona' : 'Remis rundy';
     description.textContent = round.detail;
   } else if (state.roulette.phase === 'spin') {
-    title.textContent = 'Spin phase';
-    description.textContent = 'Wheel animation is running. Result will reveal automatically.';
+    title.textContent = 'Koło w ruchu';
+    description.textContent = 'Animacja trwa, wynik zostanie odsłonięty automatycznie.';
   } else if (state.roulette.hasSelections()) {
-    title.textContent = 'Ready to spin';
+    title.textContent = 'Gotowy do kręcenia';
     description.textContent = `Aktualne wybory: ${state.roulette.getSelectionSummary()}.`;
   } else {
-    title.textContent = 'Selection phase';
+    title.textContent = 'Wybierz numer lub kolor';
     description.textContent = 'Wybierz przynajmniej jeden numer albo kolor, aby odblokować spin.';
   }
 
-  panel.append(title, description);
+  const cta = document.createElement('button');
+  cta.type = 'button';
+  cta.className = 'roulette-spin-cta';
+  cta.dataset.rouletteSpin = 'true';
+  cta.textContent = 'Zakręć kołem';
+  cta.disabled = !canStartRouletteSpin();
+
+  content.append(badge, title, description);
+  panel.append(content, cta);
   return panel;
 }
 
@@ -1598,7 +1630,7 @@ function createRouletteRecentResults() {
   recent.className = 'roulette-recent-results';
 
   if (state.roulette.recentResults.length === 0) {
-    recent.textContent = 'Recent results will appear here.';
+    recent.textContent = 'Ostatnie wyniki pojawią się tutaj.';
     return recent;
   }
 
@@ -1978,6 +2010,10 @@ function getPlayableCasinoStake() {
   elements.casinoBetInput.value = String(stake);
 
   return stake > 0 ? stake : null;
+}
+
+function canStartRouletteSpin() {
+  return getCasinoAvailableBalance() > 0 && isCasinoStakeInRange(state.casino.stake) && state.roulette.canSpin();
 }
 
 function parseCasinoStakeInput(value) {

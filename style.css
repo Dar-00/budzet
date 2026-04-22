@@ -965,7 +965,7 @@ select:focus {
 
 .casino-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.35fr) minmax(0, 1fr);
+  grid-template-columns: minmax(168px, 0.18fr) minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -982,8 +982,8 @@ select:focus {
 .casino-control-card {
   display: grid;
   align-content: start;
-  gap: 18px;
-  padding: 20px;
+  gap: 14px;
+  padding: 16px;
 }
 
 .casino-game-tabs {
@@ -1025,6 +1025,20 @@ select:focus {
   gap: 12px;
 }
 
+.casino-playdesk {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.05fr) minmax(150px, 0.35fr);
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.065);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
 .casino-field {
   display: grid;
   gap: 8px;
@@ -1058,7 +1072,7 @@ select:focus {
 
 .casino-chip-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -1100,7 +1114,7 @@ select:focus {
 }
 
 .blackjack-action-panel {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(126px, 1.4fr) repeat(2, minmax(72px, 0.8fr));
 }
 
 .blackjack-action-panel button,
@@ -1255,6 +1269,7 @@ select:focus {
 .casino-play-button,
 .casino-reset-button {
   min-height: 50px;
+  padding: 0 18px;
   border-radius: 999px;
   cursor: pointer;
   font-weight: 780;
@@ -1286,8 +1301,8 @@ select:focus {
 .casino-stage-card {
   position: relative;
   overflow: hidden;
-  min-height: 490px;
-  padding: 22px;
+  min-height: 650px;
+  padding: 26px;
 }
 
 .casino-stage-card::before {
@@ -1357,8 +1372,9 @@ select:focus {
   position: relative;
   z-index: 1;
   display: grid;
-  min-height: 300px;
-  place-items: center;
+  min-height: 430px;
+  place-items: stretch;
+  align-items: center;
   padding: 22px;
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
@@ -1403,7 +1419,7 @@ select:focus {
 .roulette-table,
 .slot-table {
   display: grid;
-  width: min(100%, 760px);
+  width: min(100%, 980px);
   gap: 18px;
 }
 
@@ -1555,29 +1571,73 @@ select:focus {
 }
 
 .roulette-table {
-  grid-template-columns: minmax(210px, 0.45fr) minmax(0, 1fr);
+  width: min(100%, 1040px);
+  grid-template-columns: minmax(240px, 0.82fr) minmax(0, 1.18fr);
   align-items: stretch;
+  gap: clamp(14px, 1.8vw, 22px);
+  margin: 0 auto;
+  overflow: hidden;
 }
 
 .roulette-wheel-panel,
-.roulette-board-panel {
+.roulette-board-panel,
+.roulette-result-panel {
+  overflow: hidden;
   display: grid;
+  background:
+    linear-gradient(145deg, rgba(26, 32, 47, 0.94), rgba(9, 12, 20, 0.9));
+  border: 1px solid rgba(180, 196, 226, 0.14);
+  border-radius: 26px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 22px 54px rgba(0, 0, 0, 0.28);
+}
+
+.roulette-wheel-panel {
   align-content: center;
   justify-items: center;
-  gap: 14px;
+  min-width: 0;
+  gap: 16px;
+  padding: clamp(18px, 2.4vw, 28px);
+}
+
+.roulette-wheel-frame {
+  position: relative;
+  display: grid;
+  width: min(100%, clamp(220px, 30vw, 330px));
+  aspect-ratio: 1;
+  place-items: center;
+  padding: clamp(14px, 1.8vw, 24px);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(79, 121, 255, 0.14), transparent 52%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(180, 196, 226, 0.16);
+  border-radius: 50%;
+  box-shadow: inset 0 0 42px rgba(0, 0, 0, 0.34), 0 24px 48px rgba(0, 0, 0, 0.32);
+}
+
+.roulette-pointer {
+  position: absolute;
+  z-index: 3;
+  top: 7px;
+  width: 0;
+  height: 0;
+  border-right: 9px solid transparent;
+  border-left: 9px solid transparent;
+  border-top: 18px solid #d7e4ff;
+  filter: drop-shadow(0 6px 12px rgba(121, 160, 255, 0.34));
 }
 
 .roulette-wheel {
   position: relative;
   display: grid;
-  width: 230px;
-  height: 230px;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1;
   place-items: center;
   background:
-    conic-gradient(from 0deg, #ba302e 0 14deg, #05070b 14deg 28deg, #ba302e 28deg 42deg, #249e5f 42deg 50deg, #05070b 50deg 64deg, #ba302e 64deg 78deg, #05070b 78deg 92deg, #ba302e 92deg 106deg, #05070b 106deg 120deg, #ba302e 120deg 134deg, #05070b 134deg 148deg, #ba302e 148deg 162deg, #249e5f 162deg 170deg, #05070b 170deg 184deg, #ba302e 184deg 198deg, #05070b 198deg 212deg, #ba302e 212deg 226deg, #05070b 226deg 240deg, #ba302e 240deg 254deg, #05070b 254deg 268deg, #ba302e 268deg 282deg, #249e5f 282deg 290deg, #05070b 290deg 304deg, #ba302e 304deg 318deg, #05070b 318deg 332deg, #ba302e 332deg 346deg, #05070b 346deg 360deg);
-  border: 12px solid rgba(255, 255, 255, 0.14);
+    conic-gradient(from 0deg, #751d24 0 14deg, #05070b 14deg 28deg, #751d24 28deg 42deg, #0d5a3f 42deg 50deg, #05070b 50deg 64deg, #751d24 64deg 78deg, #05070b 78deg 92deg, #751d24 92deg 106deg, #05070b 106deg 120deg, #751d24 120deg 134deg, #05070b 134deg 148deg, #751d24 148deg 162deg, #0d5a3f 162deg 170deg, #05070b 170deg 184deg, #751d24 184deg 198deg, #05070b 198deg 212deg, #751d24 212deg 226deg, #05070b 226deg 240deg, #751d24 240deg 254deg, #05070b 254deg 268deg, #751d24 268deg 282deg, #0d5a3f 282deg 290deg, #05070b 290deg 304deg, #751d24 304deg 318deg, #05070b 318deg 332deg, #751d24 332deg 346deg, #05070b 346deg 360deg);
+  border: clamp(10px, 1.5vw, 14px) solid rgba(213, 224, 248, 0.12);
   border-radius: 50%;
-  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.34), 0 26px 54px rgba(0, 0, 0, 0.34);
+  box-shadow: inset 0 0 38px rgba(0, 0, 0, 0.48), 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 34px rgba(68, 108, 255, 0.11);
 }
 
 .roulette-wheel.is-spinning {
@@ -1586,47 +1646,56 @@ select:focus {
 
 .roulette-wheel::before {
   position: absolute;
-  inset: 52px;
+  inset: 22%;
   content: "";
-  background: #101318;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 255, 255, 0.1), transparent 34%),
+    linear-gradient(145deg, #171c2a, #090c14);
+  border: 1px solid rgba(213, 224, 248, 0.18);
   border-radius: 50%;
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.48);
 }
 
 .roulette-ball {
   position: absolute;
-  top: 22px;
-  width: 16px;
-  height: 16px;
+  top: 8.4%;
+  width: clamp(11px, 1.4vw, 15px);
+  height: clamp(11px, 1.4vw, 15px);
   background: #ffffff;
   border-radius: 50%;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.74);
 }
 
 .roulette-outcome {
   position: relative;
   z-index: 1;
   display: grid;
-  width: 74px;
-  height: 74px;
+  width: clamp(62px, 7vw, 78px);
+  aspect-ratio: 1;
   place-items: center;
   color: #fff;
-  background: #05070b;
+  background: #070a11;
+  border: 1px solid rgba(213, 224, 248, 0.16);
   border-radius: 50%;
-  font-size: 20px;
+  font-size: clamp(18px, 2.2vw, 23px);
   font-weight: 820;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.5);
 }
 
 .roulette-outcome.red {
-  background: #ba302e;
+  background: #751d24;
 }
 
 .roulette-outcome.green {
-  background: #249e5f;
+  background: #0d5a3f;
 }
 
 .roulette-board-panel {
+  min-width: 0;
+  align-content: start;
   justify-items: stretch;
+  gap: clamp(12px, 1.4vw, 18px);
+  padding: clamp(16px, 2vw, 24px);
 }
 
 .roulette-board-title {
@@ -1637,62 +1706,73 @@ select:focus {
 }
 
 .roulette-board-title strong {
-  color: #ffffff;
+  color: rgba(232, 238, 250, 0.74);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(180, 196, 226, 0.11);
+  border-radius: 999px;
+  padding: 7px 11px;
   font-size: 13px;
   text-transform: none;
+  white-space: nowrap;
 }
 
 .roulette-number-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(38px, 1fr));
-  gap: 7px;
+  width: 100%;
+  max-width: 100%;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(6px, 0.75vw, 10px);
+  overflow: hidden;
 }
 
 .roulette-number-cell {
   display: grid;
+  aspect-ratio: 1.18 / 1;
   min-width: 0;
-  min-height: 42px;
+  min-height: clamp(38px, 4.4vw, 54px);
   place-items: center;
-  color: rgba(246, 247, 251, 0.82);
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 12px;
+  color: rgba(246, 247, 251, 0.88);
+  background: linear-gradient(180deg, rgba(16, 20, 30, 0.96), rgba(6, 8, 13, 0.96));
+  border: 1px solid rgba(180, 196, 226, 0.12);
+  border-radius: clamp(12px, 1.2vw, 16px);
   cursor: pointer;
-  font-size: 13px;
+  font-size: clamp(13px, 1.4vw, 16px);
   font-weight: 780;
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 10px 22px rgba(0, 0, 0, 0.14);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 
 .roulette-number-cell:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  border-color: rgba(180, 196, 226, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 16px 30px rgba(0, 0, 0, 0.22);
 }
 
 .roulette-number-cell.red {
-  background: rgba(186, 48, 46, 0.22);
+  background: linear-gradient(180deg, rgba(103, 24, 34, 0.94), rgba(51, 11, 18, 0.96));
 }
 
 .roulette-number-cell.black {
-  background: rgba(5, 7, 11, 0.38);
+  background: linear-gradient(180deg, rgba(16, 18, 25, 0.98), rgba(3, 5, 9, 0.98));
 }
 
 .roulette-number-cell.green {
-  background: rgba(36, 158, 95, 0.3);
+  background: linear-gradient(180deg, rgba(15, 89, 62, 0.96), rgba(5, 43, 31, 0.98));
 }
 
 .roulette-number-cell.is-selected {
-  color: #101114;
-  background: linear-gradient(180deg, #f7f8fb, #ccd5e2);
-  border-color: transparent;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
-  transform: translateY(-1px);
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(82, 117, 255, 0.92), rgba(86, 62, 190, 0.94));
+  border-color: rgba(210, 220, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(156, 178, 255, 0.26), 0 16px 34px rgba(69, 101, 255, 0.26);
+  transform: translateY(-2px);
 }
 
 .roulette-number-cell.is-winning {
-  color: #101114;
-  background: linear-gradient(135deg, #f9f1ca, #d7b55c);
-  border-color: rgba(255, 255, 255, 0.34);
-  box-shadow: 0 0 0 4px rgba(215, 181, 92, 0.18), 0 18px 34px rgba(0, 0, 0, 0.28);
+  color: #0b0d13;
+  background: linear-gradient(135deg, #eff5ff, #93aefc);
+  border-color: rgba(255, 255, 255, 0.64);
+  box-shadow: 0 0 0 5px rgba(119, 150, 255, 0.18), 0 20px 38px rgba(0, 0, 0, 0.32);
   animation: jackpotPulse 620ms ease both;
 }
 
@@ -1704,25 +1784,81 @@ select:focus {
 .roulette-result-panel {
   display: grid;
   grid-column: 1 / -1;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(14px, 2vw, 24px);
+  padding: clamp(16px, 2vw, 22px);
 }
 
 .roulette-result-panel strong {
   color: #ffffff;
-  font-size: 18px;
+  font-size: clamp(18px, 2vw, 24px);
 }
 
 .roulette-result-panel p {
   margin: 0;
-  color: rgba(246, 247, 251, 0.72);
+  color: rgba(225, 232, 246, 0.68);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.roulette-status-copy {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.roulette-status-copy p {
+  grid-column: 2;
+}
+
+.roulette-status-badge {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  grid-row: 1 / span 2;
+  place-items: center;
+  color: #dbe7ff;
+  background: rgba(101, 130, 255, 0.16);
+  border: 1px solid rgba(160, 180, 255, 0.24);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 820;
+  letter-spacing: 0;
+}
+
+.roulette-spin-cta {
+  min-height: 52px;
+  padding: 0 22px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4d83ff, #7057ff 54%, #9b6cff);
+  border-radius: 999px;
+  box-shadow: 0 18px 36px rgba(82, 103, 255, 0.28);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 820;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+.roulette-spin-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 44px rgba(82, 103, 255, 0.36);
+}
+
+.roulette-spin-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .roulette-summary,
 .slot-summary {
   text-align: center;
-  color: rgba(246, 247, 251, 0.7);
+  color: rgba(225, 232, 246, 0.66);
   font-size: 14px;
 }
 
@@ -1732,7 +1868,7 @@ select:focus {
   justify-content: center;
   min-height: 28px;
   gap: 6px;
-  color: rgba(246, 247, 251, 0.54);
+  color: rgba(225, 232, 246, 0.48);
   font-size: 12px;
 }
 
@@ -1960,12 +2096,24 @@ select:focus {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .casino-playdesk {
+    grid-template-columns: 1fr;
+  }
+
   .casino-chip-row {
     grid-template-columns: repeat(4, minmax(104px, 1fr));
   }
 
   .roulette-table {
     grid-template-columns: 1fr;
+  }
+
+  .roulette-result-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .roulette-spin-cta {
+    justify-self: start;
   }
 }
 
@@ -2057,6 +2205,11 @@ select:focus {
     font-size: 34px;
   }
 
+  .casino-stage-card {
+    min-height: auto;
+    padding: 18px;
+  }
+
   .casino-minibar h2 {
     font-size: 28px;
   }
@@ -2094,6 +2247,7 @@ select:focus {
   }
 
   .casino-stage {
+    min-height: 360px;
     padding: 14px;
   }
 
@@ -2112,8 +2266,28 @@ select:focus {
   }
 
   .roulette-wheel {
-    width: 198px;
-    height: 198px;
+    max-width: 212px;
+  }
+
+  .roulette-wheel-frame {
+    width: min(100%, 260px);
+  }
+
+  .roulette-result-panel,
+  .roulette-status-copy {
+    grid-template-columns: 1fr;
+  }
+
+  .roulette-status-copy p {
+    grid-column: auto;
+  }
+
+  .roulette-status-badge {
+    grid-row: auto;
+  }
+
+  .roulette-spin-cta {
+    width: 100%;
   }
 
   .casino-history-item {
