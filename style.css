@@ -1142,6 +1142,58 @@ select:focus {
   opacity: 0.38;
 }
 
+.roulette-color-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.roulette-color-button {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 8px;
+  color: rgba(246, 247, 251, 0.76);
+  background: rgba(255, 255, 255, 0.075);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 780;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.roulette-color-button:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.roulette-color-button.red.is-selected {
+  color: #ffffff;
+  background: rgba(186, 48, 46, 0.48);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.roulette-color-button.black.is-selected {
+  color: #ffffff;
+  background: rgba(5, 7, 11, 0.78);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.roulette-color-button.green.is-selected {
+  color: #ffffff;
+  background: rgba(36, 158, 95, 0.5);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.roulette-color-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .roulette-picks-summary {
   min-height: 48px;
   padding: 12px 14px;
@@ -1367,7 +1419,6 @@ select:focus {
 
 .blackjack-status-item,
 .blackjack-result-panel,
-.blackjack-actions-log,
 .roulette-wheel-panel,
 .roulette-board-panel,
 .roulette-result-panel {
@@ -1384,7 +1435,6 @@ select:focus {
 
 .blackjack-status-item span,
 .blackjack-hand-title,
-.blackjack-actions-log span,
 .roulette-label,
 .roulette-board-title,
 .roulette-result-panel span,
@@ -1487,20 +1537,6 @@ select:focus {
   font-weight: 780;
 }
 
-.blackjack-actions-log {
-  display: grid;
-  gap: 8px;
-}
-
-.blackjack-actions-log ul {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.blackjack-actions-log li,
 .blackjack-result-panel p {
   margin: 0;
   color: rgba(246, 247, 251, 0.72);
@@ -2038,6 +2074,7 @@ select:focus {
 
   .casino-game-tabs,
   .roulette-choice-row,
+  .roulette-color-row,
   .blackjack-action-panel,
   .blackjack-status-grid {
     grid-template-columns: 1fr;

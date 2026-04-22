@@ -252,6 +252,7 @@ class BlackjackSimulation {
 class RouletteSimulation {
   constructor() {
     this.selectedNumbers = new Set();
+    this.selectedColors = new Set();
     this.phase = 'selection';
     this.result = null;
     this.pendingStake = 0;
@@ -273,12 +274,33 @@ class RouletteSimulation {
     this.result = null;
   }
 
+  toggleColor(color) {
+    if (this.phase === 'spin' || this.phase === 'reveal') {
+      return;
+    }
+
+    if (!['red', 'black', 'green'].includes(color)) {
+      return;
+    }
+
+    if (this.selectedColors.has(color)) {
+      this.selectedColors.delete(color);
+    } else {
+      this.selectedColors.clear();
+      this.selectedColors.add(color);
+    }
+
+    this.phase = 'selection';
+    this.result = null;
+  }
+
   resetSelections() {
     if (this.phase === 'spin' || this.phase === 'reveal') {
       return;
     }
 
     this.selectedNumbers.clear();
+    this.selectedColors.clear();
     this.phase = 'selection';
     this.result = null;
     this.pendingStake = 0;
@@ -286,6 +308,7 @@ class RouletteSimulation {
 
   reset() {
     this.selectedNumbers.clear();
+    this.selectedColors.clear();
     this.phase = 'selection';
     this.result = null;
     this.pendingStake = 0;
@@ -293,7 +316,11 @@ class RouletteSimulation {
   }
 
   canSpin() {
-    return this.selectedNumbers.size > 0 && this.phase !== 'spin' && this.phase !== 'reveal';
+    return this.hasSelections() && this.phase !== 'spin' && this.phase !== 'reveal';
+  }
+
+  hasSelections() {
+    return this.selectedNumbers.size > 0 || this.selectedColors.size > 0;
   }
 
   startSpin(stake) {
@@ -313,9 +340,10 @@ class RouletteSimulation {
     }
 
     const result = this.drawResult();
-    const selected = [...this.selectedNumbers].sort((first, second) => first - second);
-    const isMatch = this.selectedNumbers.has(result.number);
-    const round = this.createRound(this.pendingStake, result, selected, isMatch);
+    const selectedNumbers = [...this.selectedNumbers].sort((first, second) => first - second);
+    const selectedColors = [...this.selectedColors];
+    const matchType = this.getMatchType(result);
+    const round = this.createRound(this.pendingStake, result, selectedNumbers, selectedColors, matchType);
 
     this.phase = 'reveal';
     this.result = result;
@@ -340,16 +368,29 @@ class RouletteSimulation {
     };
   }
 
-  createRound(stake, result, selected, isMatch) {
+  getMatchType(result) {
+    if (this.selectedNumbers.has(result.number)) {
+      return 'number';
+    }
+
+    if (this.selectedColors.has(result.color)) {
+      return 'color';
+    }
+
+    return 'none';
+  }
+
+  createRound(stake, result, selectedNumbers, selectedColors, matchType) {
     const gameName = 'Roulette Simulation';
     const visual = {
       color: result.color,
       number: String(result.number),
-      selected,
+      selectedNumbers,
+      selectedColors,
       spinning: true
     };
 
-    if (isMatch && result.number === 0 && Math.random() < 0.08) {
+    if (matchType !== 'none' && result.number === 0 && Math.random() < 0.08) {
       const delta = calculateCasinoJackpot(stake);
 
       return createCasinoRound({
@@ -365,10 +406,12 @@ class RouletteSimulation {
       });
     }
 
-    if (isMatch) {
-      const isBonus = result.number === 0 || selected.length <= 2;
-      const multiplier = result.number === 0 ? 3.5 : selected.length <= 2 ? 2.1 : 1.25;
+    if (matchType !== 'none') {
+      const isNumberMatch = matchType === 'number';
+      const isBonus = result.number === 0 || isNumberMatch && selectedNumbers.length <= 2;
+      const multiplier = getRouletteMultiplier(result, selectedNumbers.length, selectedColors.length, matchType);
       const delta = Math.ceil(stake * multiplier);
+      const detailPrefix = isNumberMatch ? `Number ${result.number}` : `${capitalize(result.color)} color`;
 
       return createCasinoRound({
         game: 'roulette',
@@ -377,8 +420,8 @@ class RouletteSimulation {
         label: isBonus ? 'Bonus win' : 'Standard win',
         delta,
         stake,
-        detail: `${capitalize(result.color)} ${result.number} · ${this.getSelectionSummary()}`,
-        message: `${isBonus ? 'Bonus win' : 'Standard win'}: +${formatCasinoAmount(delta)} za trafione pole ${result.number}.`,
+        detail: `${detailPrefix} · ${this.getSelectionSummary()}`,
+        message: `${isBonus ? 'Bonus win' : 'Standard win'}: +${formatCasinoAmount(delta)} za trafienie ${isNumberMatch ? `pola ${result.number}` : `koloru ${result.color}`}.`,
         visual
       });
     }
@@ -399,28 +442,32 @@ class RouletteSimulation {
   }
 
   getSelectionSummary() {
-    const selected = [...this.selectedNumbers].sort((first, second) => first - second);
+    const selectedNumbers = [...this.selectedNumbers].sort((first, second) => first - second);
+    const selectedColors = [...this.selectedColors].map(getRouletteColorLabel);
+    const parts = [];
 
-    if (selected.length === 0) {
-      return 'No numbers selected';
+    if (selectedColors.length > 0) {
+      parts.push(`Kolory: ${selectedColors.join(', ')}`);
     }
 
-    if (selected.length <= 8) {
-      return selected.join(', ');
+    if (selectedNumbers.length > 0) {
+      parts.push(selectedNumbers.length <= 8
+        ? `Numery: ${selectedNumbers.join(', ')}`
+        : `Numery: ${selectedNumbers.slice(0, 8).join(', ')} +${selectedNumbers.length - 8}`);
     }
 
-    return `${selected.slice(0, 8).join(', ')} +${selected.length - 8} more`;
+    return parts.length > 0 ? parts.join(' · ') : 'Brak wyborów';
   }
 
   getStatusMessage() {
     const statuses = {
-      selection: this.selectedNumbers.size > 0 ? 'Betting / selection phase' : 'Select numbers',
+      selection: this.hasSelections() ? 'Faza wyboru stawki' : 'Wybierz numer lub kolor',
       spin: 'Spin phase',
       reveal: 'Result reveal phase',
       summary: 'Round summary'
     };
 
-    return statuses[this.phase] || 'Select numbers';
+    return statuses[this.phase] || 'Wybierz numer lub kolor';
   }
 }
 
@@ -446,6 +493,7 @@ const elements = {
   blackjackHitButton: document.getElementById('blackjackHitButton'),
   blackjackStandButton: document.getElementById('blackjackStandButton'),
   rouletteChoicePanel: document.getElementById('rouletteChoicePanel'),
+  rouletteColorButtons: document.querySelectorAll('[data-roulette-color]'),
   roulettePicksSummary: document.getElementById('roulettePicksSummary'),
   rouletteClearButton: document.getElementById('rouletteClearButton'),
   casinoPlayButton: document.getElementById('casinoPlayButton'),
@@ -502,6 +550,7 @@ function bindEvents() {
   elements.blackjackDealButton.addEventListener('click', handleBlackjackDeal);
   elements.blackjackHitButton.addEventListener('click', handleBlackjackHit);
   elements.blackjackStandButton.addEventListener('click', handleBlackjackStand);
+  elements.rouletteColorButtons.forEach(button => button.addEventListener('click', handleRouletteColorClick));
   elements.rouletteClearButton.addEventListener('click', handleRouletteClear);
   elements.casinoBetInput.addEventListener('input', handleCasinoStakeInput);
   elements.casinoBetInput.addEventListener('change', handleCasinoStakeCommit);
@@ -602,6 +651,13 @@ function handleBlackjackStand() {
 
 function handleRouletteClear() {
   state.roulette.resetSelections();
+  state.casino.lastRound = null;
+  state.casino.status = state.roulette.getStatusMessage();
+  renderCasino();
+}
+
+function handleRouletteColorClick(event) {
+  state.roulette.toggleColor(event.currentTarget.dataset.rouletteColor);
   state.casino.lastRound = null;
   state.casino.status = state.roulette.getStatusMessage();
   renderCasino();
@@ -1221,7 +1277,7 @@ function renderCasinoControls() {
   elements.blackjackStandButton.disabled = balanceEmpty || !blackjackActions.stand;
   elements.rouletteChoicePanel.hidden = !isRoulette;
   elements.roulettePicksSummary.textContent = state.roulette.getSelectionSummary();
-  elements.rouletteClearButton.disabled = state.roulette.selectedNumbers.size === 0 || ['spin', 'reveal'].includes(state.roulette.phase);
+  elements.rouletteClearButton.disabled = !state.roulette.hasSelections() || ['spin', 'reveal'].includes(state.roulette.phase);
   elements.casinoBetInput.disabled = balanceEmpty || stakeLocked;
   elements.casinoBetInput.min = String(minStake);
   elements.casinoBetInput.max = String(maxStake);
@@ -1243,6 +1299,12 @@ function renderCasinoControls() {
     const value = Number(button.dataset.betChip);
     button.disabled = balanceEmpty || stakeLocked || value > maxStake || value < minStake;
     button.textContent = formatCasinoAmount(value);
+  });
+
+  elements.rouletteColorButtons.forEach(button => {
+    const color = button.dataset.rouletteColor;
+    button.disabled = !isRoulette || ['spin', 'reveal'].includes(state.roulette.phase);
+    button.classList.toggle('is-selected', state.roulette.selectedColors.has(color));
   });
 }
 
@@ -1329,7 +1391,7 @@ function createBlackjackView(round) {
     createBlackjackHand('Dealer hand', visual.dealerCards, visual.dealerTotal, visual.roundStatus === 'dealer-turn', visual.dealerTurnStatus)
   );
 
-  table.append(statusGrid, hands, createBlackjackResultPanel(visual), createBlackjackActionLog(visual.actionHistory));
+  table.append(statusGrid, hands, createBlackjackResultPanel(visual));
   return table;
 }
 
@@ -1407,31 +1469,14 @@ function createBlackjackResultPanel(visual) {
   return panel;
 }
 
-function createBlackjackActionLog(history) {
-  const log = document.createElement('div');
-  log.className = 'blackjack-actions-log';
-
-  const title = document.createElement('span');
-  title.textContent = 'Action history';
-
-  const list = document.createElement('ul');
-  const entries = history.length > 0 ? history : ['Waiting to start.'];
-
-  entries.forEach(entry => {
-    const item = document.createElement('li');
-    item.textContent = entry;
-    list.appendChild(item);
-  });
-
-  log.append(title, list);
-  return log;
-}
-
 function createRouletteView(round) {
   const result = state.roulette.result;
   const selected = [...state.roulette.selectedNumbers].sort((first, second) => first - second);
   const visual = round
-    ? round.visual
+    ? {
+        ...round.visual,
+        spinning: state.roulette.phase === 'spin'
+      }
     : {
         color: result ? result.color : 'black',
         number: result ? String(result.number) : '--',
@@ -1518,12 +1563,12 @@ function createRouletteResultPanel(round) {
   } else if (state.roulette.phase === 'spin') {
     title.textContent = 'Spin phase';
     description.textContent = 'Wheel animation is running. Result will reveal automatically.';
-  } else if (state.roulette.selectedNumbers.size > 0) {
+  } else if (state.roulette.hasSelections()) {
     title.textContent = 'Ready to spin';
-    description.textContent = `Current picks: ${state.roulette.getSelectionSummary()}.`;
+    description.textContent = `Aktualne wybory: ${state.roulette.getSelectionSummary()}.`;
   } else {
     title.textContent = 'Selection phase';
-    description.textContent = 'Select one or more numbered cells to unlock the spin action.';
+    description.textContent = 'Wybierz przynajmniej jeden numer albo kolor, aby odblokować spin.';
   }
 
   panel.append(title, description);
@@ -1731,6 +1776,28 @@ function getRouletteNumberColor(number) {
   return rouletteRedNumbers.has(number) ? 'red' : 'black';
 }
 
+function getRouletteColorLabel(color) {
+  const labels = {
+    red: 'Czerwone',
+    black: 'Czarne',
+    green: 'Zielone'
+  };
+
+  return labels[color] || color;
+}
+
+function getRouletteMultiplier(result, selectedNumberCount, selectedColorCount, matchType) {
+  if (result.number === 0) {
+    return matchType === 'number' ? 3.5 : 2.4;
+  }
+
+  if (matchType === 'number') {
+    return selectedNumberCount <= 2 ? 2.1 : 1.25;
+  }
+
+  return selectedColorCount === 1 ? 0.95 : 0.65;
+}
+
 function createBlackjackPreview() {
   return {
     playerCards: [
@@ -1849,11 +1916,11 @@ function getActiveCasinoResultMessage() {
       return 'Result reveal phase: zwycięskie pole jest podświetlone, za chwilę pojawi się podsumowanie.';
     }
 
-    if (state.roulette.selectedNumbers.size > 0) {
-      return `Aktualne pola: ${state.roulette.getSelectionSummary()}. Możesz uruchomić spin albo zresetować wybór.`;
+    if (state.roulette.hasSelections()) {
+      return `Aktualne wybory: ${state.roulette.getSelectionSummary()}. Możesz uruchomić spin albo zresetować wybór.`;
     }
 
-    return 'Wybierz co najmniej jedno pole na planszy, aby odblokować spin.';
+    return 'Wybierz co najmniej jeden kolor albo numer, aby odblokować spin.';
   }
 
   return 'Wybierz stawkę PLN i uruchom fikcyjną rundę.';

@@ -211,9 +211,14 @@
               </div>
 
               <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
-                <span>Current picks</span>
-                <div class="roulette-picks-summary" id="roulettePicksSummary">No numbers selected</div>
-                <button type="button" class="roulette-clear-button" id="rouletteClearButton">Reset selections</button>
+                <span>Aktualne wybory</span>
+                <div class="roulette-color-row" aria-label="Wybór koloru w ruletce">
+                  <button type="button" class="roulette-color-button red" data-roulette-color="red">Czerwone</button>
+                  <button type="button" class="roulette-color-button black" data-roulette-color="black">Czarne</button>
+                  <button type="button" class="roulette-color-button green" data-roulette-color="green">Zielone</button>
+                </div>
+                <div class="roulette-picks-summary" id="roulettePicksSummary">Brak wyborów</div>
+                <button type="button" class="roulette-clear-button" id="rouletteClearButton">Wyczyść wybory</button>
               </div>
 
               <button type="button" class="casino-play-button" id="casinoPlayButton">Spin wheel</button>
