@@ -153,7 +153,7 @@
         <div class="casino-minibar">
           <div>
             <p class="casino-kicker">DEMO ONLY / SIMULATION</p>
-            <h2 id="casinoTitle">Casino Simulation Mode</h2>
+            <h2 id="casinoTitle">Royal Casino</h2>
             <p>Fikcyjna symulacja interfejsu zsynchronizowana z bilansem miesiąca.</p>
           </div>
 
@@ -169,7 +169,7 @@
           <header class="casino-header">
             <div class="casino-title-block">
               <p class="casino-kicker">DEMO ONLY / SIMULATION</p>
-              <h2>Casino Simulation Mode</h2>
+              <h2>Royal Casino</h2>
               <p>Ten moduł jest fikcyjną symulacją interfejsu i nie korzysta z prawdziwych pieniędzy.</p>
             </div>
 
@@ -204,25 +204,19 @@
                 <p class="casino-bet-hint" id="casinoBetHint">Maksymalna stawka PLN jest limitowana względem bieżącego bilansu miesiąca.</p>
               </div>
 
-              <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
-                <span>Roulette choice</span>
-                <div class="roulette-choice-row">
-                  <label class="roulette-choice red">
-                    <input type="radio" name="rouletteColor" value="red" checked>
-                    <span>Red</span>
-                  </label>
-                  <label class="roulette-choice black">
-                    <input type="radio" name="rouletteColor" value="black">
-                    <span>Black</span>
-                  </label>
-                  <label class="roulette-choice green">
-                    <input type="radio" name="rouletteColor" value="green">
-                    <span>Green</span>
-                  </label>
-                </div>
+              <div class="blackjack-action-panel" id="blackjackActionPanel">
+                <button type="button" id="blackjackDealButton">Deal / New Round</button>
+                <button type="button" id="blackjackHitButton">Hit</button>
+                <button type="button" id="blackjackStandButton">Stand</button>
               </div>
 
-              <button type="button" class="casino-play-button" id="casinoPlayButton">Deal round</button>
+              <div class="roulette-choice-panel" id="rouletteChoicePanel" hidden>
+                <span>Current picks</span>
+                <div class="roulette-picks-summary" id="roulettePicksSummary">No numbers selected</div>
+                <button type="button" class="roulette-clear-button" id="rouletteClearButton">Reset selections</button>
+              </div>
+
+              <button type="button" class="casino-play-button" id="casinoPlayButton">Spin wheel</button>
               <button type="button" class="casino-reset-button" id="casinoResetButton" hidden>Wyczyść wyniki symulacji</button>
 
               <p class="casino-safety-note">PLN w tej sekcji synchronizuje się z bilansem miesiąca w aplikacji. To nadal fikcyjna symulacja interfejsu bez długu i bez real money flow.</p>
