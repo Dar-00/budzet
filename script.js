@@ -2,8 +2,6 @@ const storageKey = 'premium-budget-transactions';
 const themeStorageKey = 'premium-budget-theme';
 const casinoStorageKey = 'premium-budget-casino-demo';
 const casinoHistoryLimit = 6;
-const casinoMaxStake = 200;
-const casinoMaxStakeRatio = 0.25;
 const casinoCategory = 'Symulacja casino';
 const casinoTransactionSource = 'casino-simulation';
 
@@ -593,13 +591,17 @@ function handleCasinoChipClick(event) {
 }
 
 function handleCasinoStakeInput(event) {
-  state.casino.stake = clampCasinoStake(Number(event.target.value));
+  state.casino.stake = parseCasinoStakeInput(event.target.value);
+  state.casino.lastRound = null;
   renderCasinoControls();
 }
 
 function handleCasinoStakeCommit() {
-  state.casino.stake = clampCasinoStake(state.casino.stake);
-  saveCasinoState();
+  if (isCasinoStakeInRange(state.casino.stake)) {
+    state.casino.stake = roundCasinoStake(state.casino.stake);
+    saveCasinoState();
+  }
+
   renderCasinoControls();
 }
 
@@ -1262,17 +1264,25 @@ function renderCasinoControls() {
   const isRoulette = state.casino.game === 'roulette';
   const isSlots = state.casino.game === 'slots';
   const stakeLocked = (isBlackjack && !blackjackActions.deal) || (isRoulette && ['spin', 'reveal'].includes(state.roulette.phase));
+  const isEditingStake = document.activeElement === elements.casinoBetInput && !balanceEmpty && !stakeLocked;
 
-  state.casino.stake = balanceEmpty ? 0 : clampCasinoStake(state.casino.stake);
+  if (balanceEmpty) {
+    state.casino.stake = 0;
+  } else if (!isEditingStake && !Number.isFinite(Number(state.casino.stake))) {
+    state.casino.stake = getCasinoMinStake();
+  }
+
+  const stakeInvalid = !balanceEmpty && !stakeLocked && !isCasinoStakeInRange(state.casino.stake);
+
   elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
   elements.casinoCredits.textContent = formatCasinoAmount(availableBalance);
   elements.casinoMiniBalance.textContent = formatCasinoAmount(availableBalance);
   elements.casinoPlayButton.textContent = gameMeta.action;
   elements.casinoPlayButton.hidden = isBlackjack;
-  elements.casinoPlayButton.disabled = balanceEmpty || (isRoulette && !state.roulette.canSpin()) || (!isSlots && !isRoulette);
+  elements.casinoPlayButton.disabled = balanceEmpty || stakeInvalid || (isRoulette && !state.roulette.canSpin()) || (!isSlots && !isRoulette);
   elements.casinoResetButton.hidden = !hasCasinoTransactions && state.casino.history.length === 0;
   elements.blackjackActionPanel.hidden = !isBlackjack;
-  elements.blackjackDealButton.disabled = balanceEmpty || !blackjackActions.deal;
+  elements.blackjackDealButton.disabled = balanceEmpty || stakeInvalid || !blackjackActions.deal;
   elements.blackjackHitButton.disabled = balanceEmpty || !blackjackActions.hit;
   elements.blackjackStandButton.disabled = balanceEmpty || !blackjackActions.stand;
   elements.rouletteChoicePanel.hidden = !isRoulette;
@@ -1281,14 +1291,22 @@ function renderCasinoControls() {
   elements.casinoBetInput.disabled = balanceEmpty || stakeLocked;
   elements.casinoBetInput.min = String(minStake);
   elements.casinoBetInput.max = String(maxStake);
-  elements.casinoBetInput.value = String(state.casino.stake);
+
+  if (!isEditingStake) {
+    elements.casinoBetInput.value = String(state.casino.stake);
+  }
+
   elements.casinoModeLabel.textContent = gameMeta.label;
   elements.casinoGameTitle.textContent = gameMeta.label;
   elements.casinoRoundStatus.textContent = balanceEmpty ? 'Brak dostępnego bilansu' : getActiveCasinoStatus();
 
-  elements.casinoBetHint.textContent = balanceEmpty
-    ? `Bilans miesiąca wynosi ${formatCasinoAmount(availableBalance)}. Dodaj przychód lub usuń wydatki, aby uruchomić symulację.`
-    : `Limit rundy: ${formatCasinoAmount(minStake)}-${formatCasinoAmount(maxStake)}. Saldo casino synchronizuje się z bilansem miesiąca.`;
+  if (balanceEmpty) {
+    elements.casinoBetHint.textContent = `Bilans miesiąca wynosi ${formatCasinoAmount(availableBalance)}. Dodaj przychód lub usuń wydatki, aby uruchomić symulację.`;
+  } else if (stakeInvalid) {
+    elements.casinoBetHint.textContent = `Wpisz stawkę od ${formatCasinoAmount(minStake)} do ${formatCasinoAmount(maxStake)}. Kwota nie zostanie automatycznie obniżona.`;
+  } else {
+    elements.casinoBetHint.textContent = `Możesz wpisać własną stawkę lub użyć szybkich kwot. Maksimum to aktualne saldo: ${formatCasinoAmount(maxStake)}.`;
+  }
 
   elements.casinoGameTabs.forEach(button => {
     const isActive = button.dataset.casinoGame === state.casino.game;
@@ -1951,9 +1969,30 @@ function getPlayableCasinoStake() {
     return null;
   }
 
-  const stake = clampCasinoStake(state.casino.stake);
+  if (!isCasinoStakeInRange(state.casino.stake)) {
+    return null;
+  }
+
+  const stake = roundCasinoStake(state.casino.stake);
+  state.casino.stake = stake;
+  elements.casinoBetInput.value = String(stake);
 
   return stake > 0 ? stake : null;
+}
+
+function parseCasinoStakeInput(value) {
+  const normalizedValue = String(value).replace(',', '.');
+  const amount = Number(normalizedValue);
+
+  return Number.isFinite(amount) ? amount : Number.NaN;
+}
+
+function isCasinoStakeInRange(value) {
+  const stake = Number(value);
+  const minStake = getCasinoMinStake();
+  const maxStake = getCasinoMaxStake();
+
+  return Number.isFinite(stake) && stake >= minStake && stake <= maxStake;
 }
 
 function clearRouletteSpinTimer() {
@@ -1976,12 +2015,12 @@ function getCasinoMaxStake() {
     return 0;
   }
 
-  return Math.max(1, Math.min(casinoMaxStake, Math.floor(availableBalance * casinoMaxStakeRatio)));
+  return roundCasinoStake(availableBalance);
 }
 
 function getCasinoMinStake() {
   const maxStake = getCasinoMaxStake();
-  return maxStake > 0 ? Math.min(10, maxStake) : 0;
+  return maxStake > 0 ? roundCasinoStake(Math.min(10, maxStake)) : 0;
 }
 
 function clampCasinoStake(value) {
@@ -1996,7 +2035,11 @@ function clampCasinoStake(value) {
     return minStake;
   }
 
-  return Math.min(maxStake, Math.max(minStake, Math.floor(value)));
+  return roundCasinoStake(Math.min(maxStake, Math.max(minStake, value)));
+}
+
+function roundCasinoStake(value) {
+  return Math.round(Number(value) * 100) / 100;
 }
 
 function calculateCasinoJackpot(stake) {
