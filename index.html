@@ -82,6 +82,91 @@
       </section>
     </header>
 
+    <section class="context-panel" aria-labelledby="contextTitle">
+      <div class="context-overview">
+        <p class="section-label">Kontekst pracy</p>
+        <h2 id="contextTitle">Profil domyślny</h2>
+        <p id="contextSubtitle">Widok pojedynczego profilu</p>
+      </div>
+
+      <div class="context-tabs" role="group" aria-label="Tryb widoku finansów">
+        <button type="button" class="is-active" data-view-mode="profile">Profil</button>
+        <button type="button" data-view-mode="group">Grupa</button>
+        <button type="button" data-view-mode="allProfiles">Wszystkie</button>
+      </div>
+
+      <div class="context-controls">
+        <label class="field compact-field">
+          <span>Aktywny profil</span>
+          <select id="profileSelect" aria-label="Wybór aktywnego profilu"></select>
+        </label>
+
+        <label class="field compact-field">
+          <span>Aktywna grupa</span>
+          <select id="groupSelect" aria-label="Wybór aktywnej grupy"></select>
+        </label>
+
+        <label class="field compact-field" id="memberFilterField">
+          <span>Filtr transakcji</span>
+          <select id="memberFilterSelect" aria-label="Filtrowanie transakcji po profilu"></select>
+        </label>
+      </div>
+
+      <div class="context-members" id="contextMembers" aria-label="Członkowie aktualnego widoku"></div>
+    </section>
+
+    <section class="management-grid" aria-label="Zarządzanie profilami i grupami">
+      <section class="panel management-panel" aria-labelledby="profileManagementTitle">
+        <div class="section-heading">
+          <p class="section-label">Zarządzanie profilami</p>
+          <h2 id="profileManagementTitle">Profile</h2>
+        </div>
+
+        <form id="profileForm" class="management-form">
+          <div class="form-row">
+            <label class="field">
+              <span>Nazwa profilu</span>
+              <input type="text" name="name" placeholder="np. Tomek" autocomplete="off" required>
+            </label>
+
+            <label class="field">
+              <span>Inicjały</span>
+              <input type="text" name="avatar" placeholder="TM" maxlength="3" autocomplete="off">
+            </label>
+          </div>
+
+          <button class="secondary-button" type="submit">Dodaj profil</button>
+        </form>
+
+        <div id="profilesList" class="management-list"></div>
+      </section>
+
+      <section class="panel management-panel" aria-labelledby="groupManagementTitle">
+        <div class="section-heading">
+          <p class="section-label">Grupy</p>
+          <h2 id="groupManagementTitle">Grupy profili</h2>
+        </div>
+
+        <form id="groupForm" class="management-form">
+          <label class="field">
+            <span>Nazwa grupy</span>
+            <input type="text" name="name" placeholder="np. Dom" autocomplete="off" required>
+          </label>
+
+          <label class="field">
+            <span>Opis</span>
+            <input type="text" name="description" placeholder="Opcjonalny opis grupy" autocomplete="off">
+          </label>
+
+          <button class="secondary-button" type="submit">Utwórz grupę</button>
+        </form>
+
+        <div id="groupsList" class="management-list"></div>
+      </section>
+    </section>
+
+    <div id="appMessage" class="app-message" role="status" hidden></div>
+
     <section class="workspace-grid">
       <section class="panel input-panel" aria-labelledby="formTitle">
         <div class="section-heading">

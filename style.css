@@ -161,6 +161,8 @@ button {
 .topbar,
 .hero-grid,
 .summary-grid,
+.context-panel,
+.management-grid,
 .workspace-grid,
 .transactions-section {
   animation: fadeUp 520ms ease both;
@@ -314,6 +316,7 @@ button {
 }
 
 .snapshot,
+.context-panel,
 .panel,
 .transactions-section {
   background: var(--surface);
@@ -375,6 +378,328 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+
+.context-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(260px, 0.74fr) minmax(320px, 1.2fr);
+  gap: 18px;
+  align-items: center;
+  margin-top: 18px;
+  padding: 22px;
+}
+
+.context-overview {
+  min-width: 0;
+}
+
+.context-overview h2 {
+  overflow: hidden;
+  margin: 8px 0 8px;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-overview p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.context-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 18px;
+}
+
+.context-tabs button {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 10px;
+  color: var(--control-text);
+  background: transparent;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 720;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.context-tabs button:hover {
+  transform: translateY(-1px);
+}
+
+.context-tabs button.is-active {
+  color: var(--text);
+  background: var(--control-active-bg);
+  box-shadow: var(--control-shadow);
+}
+
+.context-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.compact-field {
+  min-width: 0;
+}
+
+.compact-field span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-field select {
+  min-height: 42px;
+  border-radius: 14px;
+}
+
+.context-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.profile-chip,
+.group-member-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  padding: 7px 10px 7px 7px;
+  color: var(--pill-text);
+  background: var(--pill-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.profile-chip b,
+.group-member-item b,
+.profile-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #111113, #3d434f);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 820;
+}
+
+:root[data-theme="dark"] .profile-chip b,
+:root[data-theme="dark"] .group-member-item b,
+:root[data-theme="dark"] .profile-avatar {
+  color: #101114;
+  background: linear-gradient(145deg, #f7f8fb, #bac4d3);
+}
+
+.profile-chip small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.management-panel {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.management-form {
+  display: grid;
+  gap: 14px;
+}
+
+.secondary-button {
+  min-height: 46px;
+  padding: 0 18px;
+  color: var(--text);
+  background: var(--control-active-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 760;
+  box-shadow: var(--control-shadow);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.secondary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--metric-hover-shadow);
+}
+
+.management-list {
+  display: grid;
+  gap: 10px;
+}
+
+.management-card {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  background: var(--transaction-bg);
+  border: 1px solid var(--transaction-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--transaction-shadow);
+}
+
+.management-identity,
+.group-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 12px;
+}
+
+.management-identity {
+  justify-content: flex-start;
+}
+
+.management-identity div,
+.group-card-header div {
+  min-width: 0;
+}
+
+.management-identity strong,
+.group-card-header strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-identity small,
+.group-card-header small {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.management-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.text-action-button {
+  min-height: 34px;
+  padding: 0 12px;
+  color: var(--icon-button-text);
+  background: var(--icon-button-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 760;
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease, opacity 160ms ease;
+}
+
+.text-action-button:hover:not(:disabled) {
+  color: var(--icon-button-hover-text);
+  background: var(--icon-button-hover-bg);
+  transform: translateY(-1px);
+}
+
+.text-action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.member-count-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 11px;
+  color: var(--pill-text);
+  background: var(--pill-bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.group-members-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.group-member-item button {
+  min-height: 26px;
+  padding: 0 9px;
+  color: var(--expense);
+  background: rgba(194, 65, 59, 0.08);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.group-member-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.group-member-tools select {
+  min-height: 38px;
+  border-radius: 12px;
+}
+
+.app-message {
+  position: fixed;
+  z-index: 20;
+  right: 24px;
+  bottom: 24px;
+  max-width: min(380px, calc(100% - 48px));
+  padding: 14px 16px;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  font-size: 14px;
+  line-height: 1.45;
+  animation: fadeUp 220ms ease both;
+}
+
+.app-message.is-error {
+  color: var(--expense);
 }
 
 .metric-card {
@@ -567,6 +892,12 @@ select:focus {
   box-shadow: 0 0 0 4px var(--input-focus-ring);
 }
 
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
 .primary-button {
   min-height: 52px;
   color: #fff;
@@ -590,6 +921,14 @@ select:focus {
 
 .primary-button:active {
   transform: translateY(0) scale(0.99);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  transform: none;
+  box-shadow: none;
 }
 
 .analytics-list {
@@ -2062,6 +2401,8 @@ select:focus {
   }
 
   .hero-grid,
+  .context-panel,
+  .management-grid,
   .workspace-grid {
     grid-template-columns: 1fr;
   }
@@ -2158,6 +2499,7 @@ select:focus {
   }
 
   .summary-grid,
+  .context-controls,
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -2167,9 +2509,22 @@ select:focus {
   }
 
   .snapshot,
+  .context-panel,
   .panel,
   .transactions-section {
     padding: 18px;
+  }
+
+  .context-overview h2 {
+    font-size: 26px;
+  }
+
+  .context-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .group-member-tools {
+    grid-template-columns: 1fr;
   }
 
   .transaction-card {

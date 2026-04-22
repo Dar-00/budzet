@@ -1,4 +1,5 @@
 const storageKey = 'premium-budget-transactions';
+const profileStorageKey = 'premium-budget-profile-store';
 const themeStorageKey = 'premium-budget-theme';
 const casinoStorageKey = 'premium-budget-casino-demo';
 const casinoHistoryLimit = 6;
@@ -514,11 +515,31 @@ const elements = {
   heroBalance: document.getElementById('heroBalance'),
   heroTransactions: document.getElementById('heroTransactions'),
   heroCategory: document.getElementById('heroCategory'),
-  financialPulse: document.getElementById('financialPulse')
+  financialPulse: document.getElementById('financialPulse'),
+  contextTitle: document.getElementById('contextTitle'),
+  contextSubtitle: document.getElementById('contextSubtitle'),
+  contextMembers: document.getElementById('contextMembers'),
+  viewModeButtons: document.querySelectorAll('[data-view-mode]'),
+  profileSelect: document.getElementById('profileSelect'),
+  groupSelect: document.getElementById('groupSelect'),
+  memberFilterField: document.getElementById('memberFilterField'),
+  memberFilterSelect: document.getElementById('memberFilterSelect'),
+  profileForm: document.getElementById('profileForm'),
+  profilesList: document.getElementById('profilesList'),
+  groupForm: document.getElementById('groupForm'),
+  groupsList: document.getElementById('groupsList'),
+  appMessage: document.getElementById('appMessage')
 };
 
+const profileStore = loadProfileStore();
+
 const state = {
-  transactions: loadTransactions(),
+  profiles: profileStore.profiles,
+  groups: profileStore.groups,
+  activeProfileId: profileStore.activeProfileId,
+  activeGroupId: profileStore.activeGroupId,
+  viewMode: profileStore.viewMode,
+  memberFilterId: 'all',
   editingId: null,
   casino: loadCasinoState(),
   casinoExpanded: false,
@@ -527,6 +548,7 @@ const state = {
   rouletteSpinTimer: null
 };
 
+saveProfileStore();
 initTheme();
 initCasino();
 setMonthStatus();
@@ -537,6 +559,14 @@ render();
 
 function bindEvents() {
   elements.themeSelect.addEventListener('change', handleThemeChange);
+  elements.viewModeButtons.forEach(button => button.addEventListener('click', handleViewModeChange));
+  elements.profileSelect.addEventListener('change', handleProfileSelect);
+  elements.groupSelect.addEventListener('change', handleGroupSelect);
+  elements.memberFilterSelect.addEventListener('change', handleMemberFilterChange);
+  elements.profileForm.addEventListener('submit', handleProfileCreate);
+  elements.profilesList.addEventListener('click', handleProfileListAction);
+  elements.groupForm.addEventListener('submit', handleGroupCreate);
+  elements.groupsList.addEventListener('click', handleGroupListAction);
   elements.form.addEventListener('submit', handleCreateTransaction);
   elements.form.addEventListener('change', handleCreateFormChange);
   elements.transactions.addEventListener('click', handleTransactionAction);
@@ -561,6 +591,247 @@ function handleThemeChange(event) {
   const theme = event.target.value;
   applyTheme(theme);
   saveTheme(theme);
+}
+
+function handleViewModeChange(event) {
+  const mode = event.currentTarget.dataset.viewMode;
+
+  if (!['profile', 'group', 'allProfiles'].includes(mode)) {
+    return;
+  }
+
+  state.viewMode = mode;
+  state.memberFilterId = 'all';
+  state.editingId = null;
+
+  if (mode === 'group' && !state.activeGroupId && state.groups.length > 0) {
+    state.activeGroupId = state.groups[0].id;
+  }
+
+  saveProfileStore();
+  render();
+}
+
+function handleProfileSelect(event) {
+  if (!getProfileById(event.target.value)) {
+    return;
+  }
+
+  state.activeProfileId = event.target.value;
+  state.viewMode = 'profile';
+  state.memberFilterId = 'all';
+  state.editingId = null;
+  saveProfileStore();
+  render();
+}
+
+function handleGroupSelect(event) {
+  state.activeGroupId = event.target.value || null;
+  state.viewMode = 'group';
+  state.memberFilterId = 'all';
+  state.editingId = null;
+  saveProfileStore();
+  render();
+}
+
+function handleMemberFilterChange(event) {
+  state.memberFilterId = event.target.value || 'all';
+  state.editingId = null;
+  render();
+}
+
+function handleProfileCreate(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const name = normalizeName(form.elements.name.value);
+  const avatar = normalizeAvatar(form.elements.avatar.value || name);
+
+  if (!name) {
+    showAppMessage('Podaj nazwę profilu.', 'error');
+    return;
+  }
+
+  const profile = createProfile(name, avatar);
+  state.profiles.push(profile);
+  state.activeProfileId = profile.id;
+  state.viewMode = 'profile';
+  state.memberFilterId = 'all';
+  form.reset();
+  saveProfileStore();
+  render();
+  showAppMessage('Profil został dodany.');
+}
+
+function handleProfileListAction(event) {
+  const button = event.target.closest('button[data-action]');
+
+  if (!button) {
+    return;
+  }
+
+  const profile = getProfileById(button.dataset.id);
+
+  if (!profile) {
+    return;
+  }
+
+  if (button.dataset.action === 'edit-profile') {
+    const answer = window.prompt('Nowa nazwa profilu:', profile.name);
+
+    if (answer === null) {
+      return;
+    }
+
+    const nextName = normalizeName(answer);
+
+    if (!nextName) {
+      showAppMessage('Nazwa profilu nie może być pusta.', 'error');
+      return;
+    }
+
+    profile.name = nextName;
+    profile.avatar = profile.avatar || createInitials(nextName);
+    saveProfileStore();
+    render();
+    showAppMessage('Nazwa profilu została zaktualizowana.');
+    return;
+  }
+
+  if (button.dataset.action === 'delete-profile') {
+    if (state.profiles.length <= 1) {
+      showAppMessage('Nie można usunąć ostatniego profilu.', 'error');
+      return;
+    }
+
+    if (!window.confirm(`Usunąć profil "${profile.name}" razem z jego transakcjami?`)) {
+      return;
+    }
+
+    state.profiles = state.profiles.filter(item => item.id !== profile.id);
+    state.groups.forEach(group => {
+      group.memberIds = group.memberIds.filter(memberId => memberId !== profile.id);
+    });
+
+    if (state.activeProfileId === profile.id) {
+      state.activeProfileId = state.profiles[0].id;
+    }
+
+    if (state.memberFilterId === profile.id) {
+      state.memberFilterId = 'all';
+    }
+
+    state.editingId = null;
+    saveProfileStore();
+    render();
+    showAppMessage('Profil został usunięty.');
+  }
+}
+
+function handleGroupCreate(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const name = normalizeName(form.elements.name.value);
+  const description = normalizeName(form.elements.description.value);
+
+  if (!name) {
+    showAppMessage('Podaj nazwę grupy.', 'error');
+    return;
+  }
+
+  const group = createGroup(name, description);
+  group.memberIds = [state.activeProfileId].filter(Boolean);
+  state.groups.push(group);
+  state.activeGroupId = group.id;
+  state.viewMode = 'group';
+  state.memberFilterId = 'all';
+  form.reset();
+  saveProfileStore();
+  render();
+  showAppMessage('Grupa została utworzona.');
+}
+
+function handleGroupListAction(event) {
+  const button = event.target.closest('button[data-action]');
+
+  if (!button) {
+    return;
+  }
+
+  const group = getGroupById(button.dataset.id);
+
+  if (!group) {
+    return;
+  }
+
+  if (button.dataset.action === 'edit-group') {
+    const answer = window.prompt('Nowa nazwa grupy:', group.name);
+
+    if (answer === null) {
+      return;
+    }
+
+    const nextName = normalizeName(answer);
+
+    if (!nextName) {
+      showAppMessage('Nazwa grupy nie może być pusta.', 'error');
+      return;
+    }
+
+    group.name = nextName;
+    saveProfileStore();
+    render();
+    showAppMessage('Nazwa grupy została zaktualizowana.');
+    return;
+  }
+
+  if (button.dataset.action === 'delete-group') {
+    if (!window.confirm(`Usunąć grupę "${group.name}"? Transakcje profili zostaną zachowane.`)) {
+      return;
+    }
+
+    state.groups = state.groups.filter(item => item.id !== group.id);
+
+    if (state.activeGroupId === group.id) {
+      state.activeGroupId = state.groups[0] ? state.groups[0].id : null;
+      state.viewMode = state.activeGroupId ? 'group' : 'profile';
+    }
+
+    state.memberFilterId = 'all';
+    saveProfileStore();
+    render();
+    showAppMessage('Grupa została usunięta.');
+    return;
+  }
+
+  if (button.dataset.action === 'add-group-member') {
+    const selector = elements.groupsList.querySelector(`[data-group-member-select="${group.id}"]`);
+    const profileId = selector ? selector.value : '';
+
+    if (!profileId || group.memberIds.includes(profileId)) {
+      return;
+    }
+
+    group.memberIds.push(profileId);
+    saveProfileStore();
+    render();
+    showAppMessage('Profil został dodany do grupy.');
+    return;
+  }
+
+  if (button.dataset.action === 'remove-group-member') {
+    const profileId = button.dataset.profileId;
+    group.memberIds = group.memberIds.filter(memberId => memberId !== profileId);
+
+    if (state.memberFilterId === profileId) {
+      state.memberFilterId = 'all';
+    }
+
+    saveProfileStore();
+    render();
+    showAppMessage('Profil został usunięty z grupy.');
+  }
 }
 
 function handleCasinoToggle() {
@@ -778,7 +1049,7 @@ function handleCasinoReset() {
   state.casino.history = [];
   state.casino.lastRound = null;
   state.casino.status = getActiveCasinoStatus();
-  state.transactions = state.transactions.filter(transaction => transaction.source !== casinoTransactionSource);
+  updateActiveProfileTransactions(transactions => transactions.filter(transaction => transaction.source !== casinoTransactionSource));
   saveTransactions();
   saveCasinoState();
   render();
@@ -795,13 +1066,18 @@ function handleCreateFormChange(event) {
 function handleCreateTransaction(event) {
   event.preventDefault();
 
+  if (!canManageTransactions()) {
+    showAppMessage('Dodawanie transakcji jest dostępne w widoku pojedynczego profilu.', 'error');
+    return;
+  }
+
   const data = readTransactionForm(elements.form);
 
   if (!isValidTransaction(data)) {
     return;
   }
 
-  state.transactions.push({
+  getActiveProfileTransactions().push({
     id: createId(),
     createdAt: new Date().toISOString(),
     ...data
@@ -826,6 +1102,10 @@ function handleTransactionAction(event) {
   const action = button.dataset.action;
 
   if (action === 'edit') {
+    if (!canManageTransactions()) {
+      return;
+    }
+
     state.editingId = id;
     renderTransactions();
     return;
@@ -838,7 +1118,11 @@ function handleTransactionAction(event) {
   }
 
   if (action === 'delete') {
-    state.transactions = state.transactions.filter(transaction => transaction.id !== id);
+    if (!canManageTransactions()) {
+      return;
+    }
+
+    updateActiveProfileTransactions(transactions => transactions.filter(transaction => transaction.id !== id));
 
     if (state.editingId === id) {
       state.editingId = null;
@@ -861,11 +1145,15 @@ function handleEditTransaction(event) {
   const id = form.dataset.id;
   const data = readTransactionForm(form);
 
+  if (!canManageTransactions()) {
+    return;
+  }
+
   if (!isValidTransaction(data)) {
     return;
   }
 
-  state.transactions = state.transactions.map(transaction => {
+  updateActiveProfileTransactions(transactions => transactions.map(transaction => {
     if (transaction.id !== id) {
       return transaction;
     }
@@ -874,7 +1162,7 @@ function handleEditTransaction(event) {
       ...transaction,
       ...data
     };
-  });
+  }));
 
   state.editingId = null;
   saveTransactions();
@@ -911,8 +1199,163 @@ function isValidTransaction(transaction) {
   );
 }
 
+function canManageTransactions() {
+  return state.viewMode === 'profile';
+}
+
+function getProfileById(id) {
+  return state.profiles.find(profile => profile.id === id) || null;
+}
+
+function getGroupById(id) {
+  return state.groups.find(group => group.id === id) || null;
+}
+
+function getActiveProfile() {
+  const profile = getProfileById(state.activeProfileId);
+
+  if (profile) {
+    return profile;
+  }
+
+  state.activeProfileId = state.profiles[0].id;
+  return state.profiles[0];
+}
+
+function getActiveGroup() {
+  return getGroupById(state.activeGroupId);
+}
+
+function getContextProfiles() {
+  if (state.viewMode === 'group') {
+    const group = getActiveGroup();
+
+    if (!group) {
+      return [];
+    }
+
+    return group.memberIds
+      .map(getProfileById)
+      .filter(Boolean);
+  }
+
+  if (state.viewMode === 'allProfiles') {
+    return state.profiles;
+  }
+
+  return [getActiveProfile()];
+}
+
+function getContextTransactions() {
+  const transactions = getContextProfiles()
+    .flatMap(profile => profile.transactions.map(transaction => annotateTransaction(transaction, profile)));
+
+  if (state.memberFilterId !== 'all') {
+    return transactions.filter(transaction => transaction.profileId === state.memberFilterId);
+  }
+
+  return transactions;
+}
+
+function getActiveProfileTransactions() {
+  return getActiveProfile().transactions;
+}
+
+function annotateTransaction(transaction, profile) {
+  return {
+    ...transaction,
+    profileId: profile.id,
+    profileName: profile.name,
+    profileAvatar: profile.avatar
+  };
+}
+
+function updateActiveProfileTransactions(updater) {
+  const profile = getActiveProfile();
+  profile.transactions = updater(profile.transactions);
+}
+
+function getTransactionProfileId(transaction) {
+  return transaction.profileId || state.activeProfileId;
+}
+
+function ensureActiveContext() {
+  if (!getProfileById(state.activeProfileId)) {
+    state.activeProfileId = state.profiles[0].id;
+  }
+
+  if (state.groups.length === 0) {
+    state.activeGroupId = null;
+
+    if (state.viewMode === 'group') {
+      state.viewMode = 'profile';
+    }
+  } else if (!getGroupById(state.activeGroupId)) {
+    state.activeGroupId = state.groups[0].id;
+  }
+
+  const validProfileIds = new Set(getContextProfiles().map(profile => profile.id));
+
+  if (state.memberFilterId !== 'all' && !validProfileIds.has(state.memberFilterId)) {
+    state.memberFilterId = 'all';
+  }
+}
+
+function getContextTitle(activeProfile, activeGroup) {
+  if (state.viewMode === 'group') {
+    return activeGroup ? activeGroup.name : 'Brak aktywnej grupy';
+  }
+
+  if (state.viewMode === 'allProfiles') {
+    return 'Wszystkie profile';
+  }
+
+  return activeProfile.name;
+}
+
+function getContextSubtitle(transactions, profiles) {
+  if (state.viewMode === 'group') {
+    return `${formatCount(profiles.length, 'członek', 'członków', 'członków')} · ${formatCount(transactions.length, 'transakcja', 'transakcje', 'transakcji')} w widoku grupy`;
+  }
+
+  if (state.viewMode === 'allProfiles') {
+    return `${formatCount(profiles.length, 'profil', 'profile', 'profili')} · wspólne podsumowanie wszystkich danych`;
+  }
+
+  return 'Widok pojedynczego profilu z możliwością dodawania i edycji transakcji';
+}
+
+function getTransactionEmptyText() {
+  if (state.viewMode === 'group') {
+    return 'Brak transakcji w tej grupie. Dodaj członków albo przełącz się na profil, aby dodać pierwsze wpisy.';
+  }
+
+  if (state.viewMode === 'allProfiles') {
+    return 'Brak transakcji w profilach. Pierwsze wpisy dodasz w widoku pojedynczego profilu.';
+  }
+
+  return 'Brak transakcji. Pierwszy wpis pojawi się tutaj od razu po dodaniu.';
+}
+
+function shouldShowTransactionOwner(transaction) {
+  return state.viewMode !== 'profile' && Boolean(transaction.profileName);
+}
+
+function showAppMessage(message, type = 'success') {
+  elements.appMessage.textContent = message;
+  elements.appMessage.className = `app-message is-${type}`;
+  elements.appMessage.hidden = false;
+
+  window.clearTimeout(showAppMessage.timer);
+  showAppMessage.timer = window.setTimeout(() => {
+    elements.appMessage.hidden = true;
+  }, 2800);
+}
+
 function render() {
-  const monthTransactions = getCurrentMonthTransactions();
+  ensureActiveContext();
+  const contextTransactions = getContextTransactions();
+  const monthTransactions = getCurrentMonthTransactions(contextTransactions);
   const incomeTotal = sumByType(monthTransactions, 'income');
   const expenseTotal = sumByType(monthTransactions, 'expense');
   const balance = incomeTotal - expenseTotal;
@@ -931,26 +1374,30 @@ function render() {
   elements.balanceMeta.textContent = balance >= 0 ? 'Dodatni wynik miesiąca' : 'Budżet wymaga korekty';
   elements.financialPulse.textContent = createPulseText(balance, incomeTotal, expenseTotal, monthTransactions.length);
 
+  renderProfileContext(contextTransactions);
+  renderProfileManagement();
+  renderGroupManagement();
+  renderFormAvailability();
   renderAnalytics(monthTransactions);
-  renderTransactions();
+  renderTransactions(contextTransactions);
   renderCasino();
 }
 
-function renderTransactions() {
+function renderTransactions(transactions = getContextTransactions()) {
   elements.transactions.innerHTML = '';
   elements.transactionsCount.textContent = formatCount(
-    state.transactions.length,
+    transactions.length,
     'pozycja',
     'pozycje',
     'pozycji'
   );
 
-  if (state.transactions.length === 0) {
-    elements.transactions.appendChild(createEmptyState('Brak transakcji. Pierwszy wpis pojawi się tutaj od razu po dodaniu.'));
+  if (transactions.length === 0) {
+    elements.transactions.appendChild(createEmptyState(getTransactionEmptyText()));
     return;
   }
 
-  const sortedTransactions = [...state.transactions].sort((first, second) => {
+  const sortedTransactions = [...transactions].sort((first, second) => {
     const dateDiff = new Date(second.date) - new Date(first.date);
     return dateDiff || new Date(second.createdAt) - new Date(first.createdAt);
   });
@@ -963,6 +1410,259 @@ function renderTransactions() {
 
     elements.transactions.appendChild(createTransactionCard(transaction));
   });
+}
+
+function renderProfileContext(contextTransactions = getContextTransactions()) {
+  ensureActiveContext();
+
+  const activeProfile = getActiveProfile();
+  const activeGroup = getActiveGroup();
+  const contextProfiles = getContextProfiles();
+
+  fillProfileSelect(elements.profileSelect, state.activeProfileId);
+  fillGroupSelect(elements.groupSelect, state.activeGroupId);
+  fillMemberFilterSelect(contextProfiles);
+
+  elements.memberFilterField.hidden = state.viewMode === 'profile';
+  elements.contextTitle.textContent = getContextTitle(activeProfile, activeGroup);
+  elements.contextSubtitle.textContent = getContextSubtitle(contextTransactions, contextProfiles);
+
+  elements.viewModeButtons.forEach(button => {
+    button.classList.toggle('is-active', button.dataset.viewMode === state.viewMode);
+  });
+
+  elements.contextMembers.innerHTML = '';
+
+  if (contextProfiles.length === 0) {
+    elements.contextMembers.appendChild(createEmptyState('Brak profili w tym widoku. Dodaj członków do grupy albo wybierz inny kontekst.'));
+    return;
+  }
+
+  contextProfiles.forEach(profile => {
+    elements.contextMembers.appendChild(createProfileChip(profile));
+  });
+}
+
+function renderProfileManagement() {
+  elements.profilesList.innerHTML = '';
+
+  if (state.profiles.length === 0) {
+    elements.profilesList.appendChild(createEmptyState('Brak profili.'));
+    return;
+  }
+
+  state.profiles.forEach(profile => {
+    elements.profilesList.appendChild(createProfileManagementCard(profile));
+  });
+}
+
+function renderGroupManagement() {
+  elements.groupsList.innerHTML = '';
+
+  if (state.groups.length === 0) {
+    elements.groupsList.appendChild(createEmptyState('Nie masz jeszcze grup. Utwórz grupę i dodaj do niej profile.'));
+    return;
+  }
+
+  state.groups.forEach(group => {
+    elements.groupsList.appendChild(createGroupManagementCard(group));
+  });
+}
+
+function renderFormAvailability() {
+  const canEdit = canManageTransactions();
+
+  [...elements.form.elements].forEach(control => {
+    if (control.type !== 'submit') {
+      control.disabled = !canEdit;
+    }
+  });
+
+  const submit = elements.form.querySelector('button[type="submit"]');
+  submit.disabled = !canEdit;
+  submit.textContent = canEdit ? 'Dodaj transakcję' : 'Wybierz profil, aby dodać transakcję';
+}
+
+function fillProfileSelect(select, selectedId) {
+  select.innerHTML = '';
+
+  state.profiles.forEach(profile => {
+    addOption(select, profile.id, profile.name, selectedId);
+  });
+}
+
+function fillGroupSelect(select, selectedId) {
+  select.innerHTML = '';
+
+  if (state.groups.length === 0) {
+    addOption(select, '', 'Brak grup', '');
+    select.disabled = true;
+    return;
+  }
+
+  select.disabled = false;
+  state.groups.forEach(group => {
+    addOption(select, group.id, group.name, selectedId);
+  });
+}
+
+function fillMemberFilterSelect(profiles) {
+  elements.memberFilterSelect.innerHTML = '';
+  addOption(elements.memberFilterSelect, 'all', 'Wszyscy w widoku', state.memberFilterId);
+
+  profiles.forEach(profile => {
+    addOption(elements.memberFilterSelect, profile.id, profile.name, state.memberFilterId);
+  });
+
+  elements.memberFilterSelect.disabled = profiles.length === 0;
+}
+
+function createProfileChip(profile) {
+  const chip = document.createElement('span');
+  chip.className = 'profile-chip';
+
+  const avatar = document.createElement('b');
+  avatar.textContent = profile.avatar;
+
+  const name = document.createElement('span');
+  name.textContent = profile.name;
+
+  const count = document.createElement('small');
+  count.textContent = formatCount(profile.transactions.length, 'transakcja', 'transakcje', 'transakcji');
+
+  chip.append(avatar, name, count);
+  return chip;
+}
+
+function createProfileManagementCard(profile) {
+  const card = document.createElement('article');
+  card.className = 'management-card';
+
+  const identity = document.createElement('div');
+  identity.className = 'management-identity';
+
+  const avatar = document.createElement('span');
+  avatar.className = 'profile-avatar';
+  avatar.textContent = profile.avatar;
+
+  const copy = document.createElement('div');
+  const name = document.createElement('strong');
+  name.textContent = profile.name;
+
+  const meta = document.createElement('small');
+  meta.textContent = `${formatCount(profile.transactions.length, 'transakcja', 'transakcje', 'transakcji')}${profile.id === state.activeProfileId ? ' · aktywny' : ''}`;
+
+  copy.append(name, meta);
+  identity.append(avatar, copy);
+
+  const actions = document.createElement('div');
+  actions.className = 'management-actions';
+  actions.append(
+    createTextActionButton('edit-profile', profile.id, 'Edytuj'),
+    createTextActionButton('delete-profile', profile.id, 'Usuń')
+  );
+
+  card.append(identity, actions);
+  return card;
+}
+
+function createGroupManagementCard(group) {
+  const members = group.memberIds
+    .map(getProfileById)
+    .filter(Boolean);
+  const availableProfiles = state.profiles.filter(profile => !group.memberIds.includes(profile.id));
+  const card = document.createElement('article');
+  card.className = 'management-card group-card';
+
+  const header = document.createElement('div');
+  header.className = 'group-card-header';
+
+  const copy = document.createElement('div');
+  const name = document.createElement('strong');
+  name.textContent = group.name;
+
+  const description = document.createElement('small');
+  description.textContent = group.description || 'Grupa bez opisu';
+
+  copy.append(name, description);
+
+  const badge = document.createElement('span');
+  badge.className = 'member-count-badge';
+  badge.textContent = formatCount(members.length, 'członek', 'członków', 'członków');
+
+  header.append(copy, badge);
+
+  const membersList = document.createElement('div');
+  membersList.className = 'group-members-list';
+
+  if (members.length === 0) {
+    membersList.appendChild(createEmptyState('Brak członków w grupie.'));
+  } else {
+    members.forEach(profile => {
+      membersList.appendChild(createGroupMemberItem(profile, group.id));
+    });
+  }
+
+  const memberTools = document.createElement('div');
+  memberTools.className = 'group-member-tools';
+
+  const select = document.createElement('select');
+  select.dataset.groupMemberSelect = group.id;
+
+  if (availableProfiles.length === 0) {
+    addOption(select, '', 'Wszyscy dodani', '');
+    select.disabled = true;
+  } else {
+    availableProfiles.forEach(profile => {
+      addOption(select, profile.id, profile.name);
+    });
+  }
+
+  const addButton = createTextActionButton('add-group-member', group.id, 'Dodaj do grupy');
+  addButton.disabled = availableProfiles.length === 0;
+  memberTools.append(select, addButton);
+
+  const actions = document.createElement('div');
+  actions.className = 'management-actions';
+  actions.append(
+    createTextActionButton('edit-group', group.id, 'Edytuj'),
+    createTextActionButton('delete-group', group.id, 'Usuń')
+  );
+
+  card.append(header, membersList, memberTools, actions);
+  return card;
+}
+
+function createGroupMemberItem(profile, groupId) {
+  const item = document.createElement('span');
+  item.className = 'group-member-item';
+
+  const avatar = document.createElement('b');
+  avatar.textContent = profile.avatar;
+
+  const name = document.createElement('span');
+  name.textContent = profile.name;
+
+  const remove = document.createElement('button');
+  remove.type = 'button';
+  remove.dataset.action = 'remove-group-member';
+  remove.dataset.id = groupId;
+  remove.dataset.profileId = profile.id;
+  remove.setAttribute('aria-label', `Usuń profil ${profile.name} z grupy`);
+  remove.textContent = 'Usuń';
+
+  item.append(avatar, name, remove);
+  return item;
+}
+
+function createTextActionButton(action, id, text) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'text-action-button';
+  button.dataset.action = action;
+  button.dataset.id = id;
+  button.textContent = text;
+  return button;
 }
 
 function renderAnalytics(monthTransactions) {
@@ -1030,19 +1730,26 @@ function createTransactionCard(transaction) {
   meta.className = 'transaction-meta';
   meta.append(createMetaItem(transaction.category), createMetaItem(formatDate(transaction.date)));
 
+  if (shouldShowTransactionOwner(transaction)) {
+    meta.appendChild(createMetaItem(`Profil: ${transaction.profileName}`));
+  }
+
   const amount = document.createElement('div');
   amount.className = 'transaction-amount';
   amount.textContent = `${transaction.type === 'income' ? '+' : '-'} ${formatCurrency(transaction.amount)}`;
 
-  const actions = document.createElement('div');
-  actions.className = 'transaction-actions';
-  actions.append(
-    createIconButton('edit', transaction.id, 'Edytuj transakcję'),
-    createIconButton('delete', transaction.id, 'Usuń transakcję')
-  );
-
   main.append(title, meta);
-  card.append(icon, main, amount, actions);
+  card.append(icon, main, amount);
+
+  if (canManageTransactions() && getTransactionProfileId(transaction) === state.activeProfileId) {
+    const actions = document.createElement('div');
+    actions.className = 'transaction-actions';
+    actions.append(
+      createIconButton('edit', transaction.id, 'Edytuj transakcję'),
+      createIconButton('delete', transaction.id, 'Usuń transakcję')
+    );
+    card.appendChild(actions);
+  }
 
   return card;
 }
@@ -1171,10 +1878,10 @@ function addOption(select, value, text, selectedValue) {
   select.appendChild(option);
 }
 
-function getCurrentMonthTransactions() {
+function getCurrentMonthTransactions(transactions = getContextTransactions()) {
   const now = new Date();
 
-  return state.transactions.filter(transaction => {
+  return transactions.filter(transaction => {
     const date = parseDate(transaction.date);
     return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
   });
@@ -1263,39 +1970,41 @@ function renderCasinoControls() {
   const minStake = getCasinoMinStake();
   const maxStake = getCasinoMaxStake();
   const availableBalance = getCasinoAvailableBalance();
+  const profileLocked = !canManageTransactions();
   const balanceEmpty = availableBalance <= 0;
-  const hasCasinoTransactions = state.transactions.some(transaction => transaction.source === casinoTransactionSource);
+  const controlsDisabled = profileLocked || balanceEmpty;
+  const hasCasinoTransactions = getActiveProfileTransactions().some(transaction => transaction.source === casinoTransactionSource);
   const gameMeta = getCasinoGameMeta(state.casino.game);
   const blackjackActions = state.blackjack.getAvailableActions();
   const isBlackjack = state.casino.game === 'blackjack';
   const isRoulette = state.casino.game === 'roulette';
   const isSlots = state.casino.game === 'slots';
   const stakeLocked = (isBlackjack && !blackjackActions.deal) || (isRoulette && ['spin', 'reveal'].includes(state.roulette.phase));
-  const isEditingStake = document.activeElement === elements.casinoBetInput && !balanceEmpty && !stakeLocked;
+  const isEditingStake = document.activeElement === elements.casinoBetInput && !controlsDisabled && !stakeLocked;
 
-  if (balanceEmpty) {
+  if (balanceEmpty && !profileLocked) {
     state.casino.stake = 0;
-  } else if (!isEditingStake && !Number.isFinite(Number(state.casino.stake))) {
+  } else if (!profileLocked && !isEditingStake && !Number.isFinite(Number(state.casino.stake))) {
     state.casino.stake = getCasinoMinStake();
   }
 
-  const stakeInvalid = !balanceEmpty && !stakeLocked && !isCasinoStakeInRange(state.casino.stake);
+  const stakeInvalid = !controlsDisabled && !stakeLocked && !isCasinoStakeInRange(state.casino.stake);
 
   elements.casinoBalanceLabel.textContent = getCasinoBalanceLabel();
   elements.casinoCredits.textContent = formatCasinoAmount(availableBalance);
   elements.casinoMiniBalance.textContent = formatCasinoAmount(availableBalance);
   elements.casinoPlayButton.textContent = gameMeta.action;
   elements.casinoPlayButton.hidden = isBlackjack || isRoulette;
-  elements.casinoPlayButton.disabled = balanceEmpty || stakeInvalid || (isRoulette && !state.roulette.canSpin()) || (!isSlots && !isRoulette);
-  elements.casinoResetButton.hidden = !hasCasinoTransactions && state.casino.history.length === 0;
+  elements.casinoPlayButton.disabled = controlsDisabled || stakeInvalid || (isRoulette && !state.roulette.canSpin()) || (!isSlots && !isRoulette);
+  elements.casinoResetButton.hidden = profileLocked || (!hasCasinoTransactions && state.casino.history.length === 0);
   elements.blackjackActionPanel.hidden = !isBlackjack;
-  elements.blackjackDealButton.disabled = balanceEmpty || stakeInvalid || !blackjackActions.deal;
-  elements.blackjackHitButton.disabled = balanceEmpty || !blackjackActions.hit;
-  elements.blackjackStandButton.disabled = balanceEmpty || !blackjackActions.stand;
+  elements.blackjackDealButton.disabled = controlsDisabled || stakeInvalid || !blackjackActions.deal;
+  elements.blackjackHitButton.disabled = controlsDisabled || !blackjackActions.hit;
+  elements.blackjackStandButton.disabled = controlsDisabled || !blackjackActions.stand;
   elements.rouletteChoicePanel.hidden = !isRoulette;
   elements.roulettePicksSummary.textContent = state.roulette.getSelectionSummary();
-  elements.rouletteClearButton.disabled = !state.roulette.hasSelections() || ['spin', 'reveal'].includes(state.roulette.phase);
-  elements.casinoBetInput.disabled = balanceEmpty || stakeLocked;
+  elements.rouletteClearButton.disabled = profileLocked || !state.roulette.hasSelections() || ['spin', 'reveal'].includes(state.roulette.phase);
+  elements.casinoBetInput.disabled = controlsDisabled || stakeLocked;
   elements.casinoBetInput.min = String(minStake);
   elements.casinoBetInput.max = String(maxStake);
 
@@ -1305,9 +2014,11 @@ function renderCasinoControls() {
 
   elements.casinoModeLabel.textContent = gameMeta.label;
   elements.casinoGameTitle.textContent = gameMeta.label;
-  elements.casinoRoundStatus.textContent = balanceEmpty ? 'Brak dostępnego bilansu' : getActiveCasinoStatus();
+  elements.casinoRoundStatus.textContent = profileLocked ? 'Widok tylko do podglądu' : balanceEmpty ? 'Brak dostępnego bilansu' : getActiveCasinoStatus();
 
-  if (balanceEmpty) {
+  if (profileLocked) {
+    elements.casinoBetHint.textContent = 'Royal Casino działa tylko w widoku pojedynczego profilu, żeby nie mieszać agregatów grupowych z transakcjami profilu.';
+  } else if (balanceEmpty) {
     elements.casinoBetHint.textContent = `Bilans miesiąca wynosi ${formatCasinoAmount(availableBalance)}. Dodaj przychód lub usuń wydatki, aby uruchomić symulację.`;
   } else if (stakeInvalid) {
     elements.casinoBetHint.textContent = `Wpisz stawkę od ${formatCasinoAmount(minStake)} do ${formatCasinoAmount(maxStake)}. Kwota nie zostanie automatycznie obniżona.`;
@@ -1322,13 +2033,13 @@ function renderCasinoControls() {
 
   elements.casinoChipButtons.forEach(button => {
     const value = Number(button.dataset.betChip);
-    button.disabled = balanceEmpty || stakeLocked || value > maxStake || value < minStake;
+    button.disabled = controlsDisabled || stakeLocked || value > maxStake || value < minStake;
     button.textContent = formatCasinoAmount(value);
   });
 
   elements.rouletteColorButtons.forEach(button => {
     const color = button.dataset.rouletteColor;
-    button.disabled = !isRoulette || ['spin', 'reveal'].includes(state.roulette.phase);
+    button.disabled = profileLocked || !isRoulette || ['spin', 'reveal'].includes(state.roulette.phase);
     button.classList.toggle('is-selected', state.roulette.selectedColors.has(color));
   });
 }
@@ -1764,7 +2475,7 @@ function addCasinoTransaction(round) {
     return;
   }
 
-  state.transactions.push({
+  getActiveProfileTransactions().push({
     id: createId(),
     createdAt: new Date().toISOString(),
     description: `${round.gameName}: ${round.label}`,
@@ -1945,6 +2656,10 @@ function getActiveCasinoResultType() {
 }
 
 function getActiveCasinoResultMessage() {
+  if (!canManageTransactions()) {
+    return 'Przełącz na pojedynczy profil, aby uruchomić symulację bez zapisywania wyników w widoku zbiorczym.';
+  }
+
   if (getCasinoAvailableBalance() <= 0) {
     return 'Bilans miesiąca wynosi 0,00 zł. Symulacja nie tworzy długu ani ujemnego salda.';
   }
@@ -1993,10 +2708,15 @@ function getCasinoResultClass(type) {
 }
 
 function getCasinoAvailableBalance() {
-  return Math.max(0, getCurrentMonthBalance());
+  const monthTransactions = getCurrentMonthTransactions(getActiveProfileTransactions());
+  return Math.max(0, sumByType(monthTransactions, 'income') - sumByType(monthTransactions, 'expense'));
 }
 
 function getPlayableCasinoStake() {
+  if (!canManageTransactions()) {
+    return null;
+  }
+
   if (getCasinoAvailableBalance() <= 0) {
     return null;
   }
@@ -2013,7 +2733,7 @@ function getPlayableCasinoStake() {
 }
 
 function canStartRouletteSpin() {
-  return getCasinoAvailableBalance() > 0 && isCasinoStakeInRange(state.casino.stake) && state.roulette.canSpin();
+  return canManageTransactions() && getCasinoAvailableBalance() > 0 && isCasinoStakeInRange(state.casino.stake) && state.roulette.canSpin();
 }
 
 function parseCasinoStakeInput(value) {
@@ -2207,7 +2927,155 @@ function normalizeCasinoHistoryEntry(entry) {
 }
 
 function saveTransactions() {
-  localStorage.setItem(storageKey, JSON.stringify(state.transactions));
+  saveProfileStore();
+}
+
+function saveProfileStore() {
+  try {
+    localStorage.setItem(profileStorageKey, JSON.stringify({
+      profiles: state.profiles,
+      groups: state.groups,
+      activeProfileId: state.activeProfileId,
+      activeGroupId: state.activeGroupId,
+      viewMode: state.viewMode
+    }));
+  } catch {
+    return;
+  }
+}
+
+function loadProfileStore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(profileStorageKey));
+
+    if (saved && typeof saved === 'object' && Array.isArray(saved.profiles)) {
+      return normalizeProfileStore(saved);
+    }
+  } catch {
+    return createMigratedProfileStore();
+  }
+
+  return createMigratedProfileStore();
+}
+
+function normalizeProfileStore(saved) {
+  const profiles = saved.profiles
+    .map(normalizeProfile)
+    .filter(Boolean);
+  const safeProfiles = profiles.length > 0
+    ? profiles
+    : [createProfile('Domyślny', 'D')];
+  const profileIds = new Set(safeProfiles.map(profile => profile.id));
+  const groups = Array.isArray(saved.groups)
+    ? saved.groups
+        .map(group => normalizeGroup(group, profileIds))
+        .filter(Boolean)
+    : [];
+  const activeProfileId = profileIds.has(saved.activeProfileId)
+    ? saved.activeProfileId
+    : safeProfiles[0].id;
+  const activeGroupId = groups.some(group => group.id === saved.activeGroupId)
+    ? saved.activeGroupId
+    : groups[0] ? groups[0].id : null;
+  const savedMode = ['profile', 'group', 'allProfiles'].includes(saved.viewMode)
+    ? saved.viewMode
+    : 'profile';
+  const viewMode = savedMode === 'group' && !activeGroupId ? 'profile' : savedMode;
+
+  return {
+    profiles: safeProfiles,
+    groups,
+    activeProfileId,
+    activeGroupId,
+    viewMode
+  };
+}
+
+function createMigratedProfileStore() {
+  const defaultProfile = createProfile('Domyślny', 'D', loadTransactions());
+
+  return {
+    profiles: [defaultProfile],
+    groups: [],
+    activeProfileId: defaultProfile.id,
+    activeGroupId: null,
+    viewMode: 'profile'
+  };
+}
+
+function normalizeProfile(profile) {
+  if (!profile || typeof profile !== 'object') {
+    return null;
+  }
+
+  const name = normalizeName(profile.name) || 'Profil';
+  const transactions = Array.isArray(profile.transactions)
+    ? profile.transactions.map(normalizeTransaction).filter(Boolean)
+    : [];
+
+  return {
+    id: String(profile.id || createId()),
+    name,
+    avatar: normalizeAvatar(profile.avatar || name),
+    transactions
+  };
+}
+
+function normalizeGroup(group, profileIds) {
+  if (!group || typeof group !== 'object') {
+    return null;
+  }
+
+  const name = normalizeName(group.name) || 'Grupa';
+  const memberIds = Array.isArray(group.memberIds)
+    ? [...new Set(group.memberIds.map(String).filter(id => profileIds.has(id)))]
+    : [];
+
+  return {
+    id: String(group.id || createId()),
+    name,
+    description: normalizeName(group.description),
+    memberIds
+  };
+}
+
+function createProfile(name, avatar, transactions = []) {
+  const normalizedName = normalizeName(name) || 'Profil';
+
+  return {
+    id: createId(),
+    name: normalizedName,
+    avatar: normalizeAvatar(avatar || normalizedName),
+    transactions: transactions.map(normalizeTransaction).filter(Boolean)
+  };
+}
+
+function createGroup(name, description = '') {
+  return {
+    id: createId(),
+    name: normalizeName(name) || 'Grupa',
+    description: normalizeName(description),
+    memberIds: []
+  };
+}
+
+function normalizeName(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function normalizeAvatar(value) {
+  const clean = String(value || '').trim().replace(/\s+/g, '').slice(0, 3).toUpperCase();
+  return clean || createInitials(value);
+}
+
+function createInitials(value) {
+  const words = normalizeName(value).split(' ').filter(Boolean);
+
+  if (words.length === 0) {
+    return 'P';
+  }
+
+  return words.slice(0, 2).map(word => word[0]).join('').toUpperCase();
 }
 
 function loadTransactions() {
